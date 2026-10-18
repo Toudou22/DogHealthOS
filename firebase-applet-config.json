@@ -1,0 +1,10 @@
+{
+  "projectId": "doghealthos",
+  "appId": "1:471582186365:web:15163db18c039dbbafca14",
+  "apiKey": "AIzaSyBEb8H35C1oaVcGa-BCmy5bE0U2TydlDy8",
+  "authDomain": "doghealthos.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "doghealthos.firebasestorage.app",
+  "messagingSenderId": "471582186365",
+  "measurementId": "G-ECMXVZQ782"
+}

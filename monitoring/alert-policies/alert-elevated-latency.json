@@ -1,0 +1,42 @@
+{
+  "displayName": "DogHealthOS - Elevated Request Latency (P95 > 1200ms over 10m)",
+  "documentation": {
+    "content": "## Elevated Request Latency Alert\n\n**Threshold Breached:** 95th percentile (P95) request latency across DogHealthOS Cloud Run instances exceeded 1,200ms over a 10-minute window.\n\n### Recommended Investigation:\n1. Check `/api/gemini/tts` neural voice synthesis latency spikes.\n2. Check cold starts or container concurrency limits (target: 80 req/instance).\n3. Consider scaling minimum instances from 1 to 2 if traffic surge is detected.\n\n**Notification Recipient:** anthonytoudou@gmail.com\n**Severity:** HIGH (High-Priority Notification)",
+    "mimeType": "text/markdown"
+  },
+  "conditions": [
+    {
+      "displayName": "P95 request latency exceeds 1200ms",
+      "conditionThreshold": {
+        "filter": "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"doghealthos-prod\" AND metric.type = \"run.googleapis.com/request_latencies\"",
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 1200,
+        "duration": "600s",
+        "aggregations": [
+          {
+            "alignmentPeriod": "600s",
+            "perSeriesAligner": "ALIGN_PERCENTILE_95",
+            "crossSeriesReducer": "REDUCE_PERCENTILE_95",
+            "groupByFields": [
+              "resource.labels.service_name"
+            ]
+          }
+        ],
+        "trigger": {
+          "count": 1
+        }
+      }
+    }
+  ],
+  "combiner": "OR",
+  "enabled": true,
+  "notificationChannels": [
+    "projects/${PROJECT_ID}/notificationChannels/${CHANNEL_EMAIL_ID}"
+  ],
+  "alertStrategy": {
+    "autoClose": "3600s",
+    "notificationRateLimit": {
+      "period": "600s"
+    }
+  }
+}

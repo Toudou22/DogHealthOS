@@ -1,0 +1,36 @@
+# AI-Era robots.txt - Optimized for Generative Search (GEO) & Search Indexes (SEO)
+# Compliant with the EMERAE AI-Era Content Visibility System
+
+User-agent: *
+Allow: /
+Allow: /dog-images/
+Allow: /api/gemini/
+
+# Welcome and optimize for AI/Generative Search Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CoPilot
+Allow: /
+
+# Reference modern LLM maps & XML Sitemap
+Sitemap: https://app.doghealthos.com/sitemap.xml
+Sitemap: /llms.txt

@@ -1,0 +1,6 @@
+{
+  "name": "DogHealthOS",
+  "description": "Calculate your dog's size-adjusted life expectancy, active life stage, human age equivalence, physiological developmental milestones, and age-calibrated clinical health advice.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

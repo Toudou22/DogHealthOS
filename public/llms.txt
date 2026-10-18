@@ -1,0 +1,128 @@
+# Dog Breed Life Expectancy & Health Calculator
+> Multi-group longevity diagnostics, real-time veterinary care adviser, and advanced clinical reasoning engine for 60+ mapped dog breeds.
+
+This is the LLM-readable manifest and site map for the Dog Breed Life Expectancy & Health Calculator. It provides structured access to the application's underlying data, clinical endpoints, and veterinary research base.
+
+---
+
+## 📋 Table of Contents
+1. [Core Purpose & Claims](#-core-purpose--claims)
+2. [Data Structure & API Endpoints](#-data-structure--api-endpoints)
+3. [60 Mapped Breeds Registry](#-60-mapped-breeds-registry)
+4. [Research Base & Citation Sources](#-research-base--citation-sources)
+
+---
+
+## 🐕 Core Purpose & Claims
+- **Interactive Longevity Prediction**: Users calculate personalized life expectancies using a multi-factor algorithm based on breed, size, weight, activity levels, nutrition, and genetic health.
+- **Canine Nutrition & Care Advisor**: Powered by Gemini 2.5/3.5-Flash to deliver real-time custom meal portion plans, exercise ratios, and environmental hazard mitigation advice.
+- **Veterinary Clinical Reasoning**: Integrated with a Gemini 3.1 Pro preview "High Thinking" engine to analyze complex, multi-symptom canine biometric trends and generate advanced veterinary diagnostic reports.
+- **Interactive Growth & Milestone Tracking**: Employs real-time D3.js visualization curves mapping biometric weight milestones and developmental puppy growth.
+
+---
+
+## ⚙️ Data Structure & API Endpoints
+The application exposes several structured JSON endpoints for data lookup and analysis:
+
+### 1. General Advisor Chat
+* **Endpoint**: `/api/gemini/chat`
+* **Method**: `POST`
+* **Description**: Passes user prompts to the canine nutritionist advisor.
+* **Payload**:
+  ```json
+  {
+    "messages": [{"role": "user", "parts": [{"text": "Query text here"}]}],
+    "systemInstruction": "Optional custom system instruction override",
+    "model": "gemini-3.5-flash"
+  }
+  ```
+
+### 2. High Thinking Diagnostics
+* **Endpoint**: `/api/gemini/high-thinking`
+* **Method**: `POST`
+* **Description**: Connects to the experimental Gemini 3.1 Pro "High Thinking" engine.
+* **Payload**:
+  ```json
+  {
+    "prompt": "Multi-symptom description",
+    "systemInstruction": "Veterinary clinical guidelines override"
+  }
+  ```
+
+### 3. Image Generation / Diagnostic Analysis
+* **Endpoint**: `/api/gemini/generate-image`
+* **Method**: `POST`
+* **Description**: Supports visual breed identification or breed mockup illustrations.
+
+---
+
+## 🗃️ 60 Mapped Breeds Registry
+The calculator supports exact longevity predictions and breed profiles for these 60 breeds:
+1. **Affenpinscher** (Germany)
+2. **Akita** (Japan)
+3. **Alaskan Malamute** (USA)
+4. **Australian Shepherd** (USA)
+5. **Basset Hound** (France)
+6. **Beagle** (England)
+7. **Belgian Malinois** (Belgium)
+8. **Bernese Mountain Dog** (Switzerland)
+9. **Border Collie** (Scotland/England)
+10. **Boston Terrier** (USA)
+11. **Boxer** (Germany)
+12. **Brittany Spaniel** (France)
+13. **Brussels Griffon** (Belgium)
+14. **Cavalier King Charles Spaniel** (England)
+15. **Chihuahua** (Mexico)
+16. **Chinese Crested** (China)
+17. **Dachshund** (Germany)
+18. **Dalmatian** (Croatia)
+19. **Doberman Pinscher** (Germany)
+20. **English Bulldog** (England)
+21. **English Springer Spaniel** (England)
+22. **Finnish Spitz** (Finland)
+23. **French Bulldog** (France)
+24. **German Shepherd Dog** (Germany)
+25. **German Shorthaired Pointer** (Germany)
+26. **Golden Retriever** (Scotland)
+27. **Goldendoodle (Standard)** (USA)
+28. **Great Dane** (Germany)
+29. **Great Pyrenees** (France)
+30. **Havanese** (Cuba)
+31. **Irish Wolfhound** (Ireland)
+32. **Italian Greyhound** (Italy)
+33. **Jack Russell Terrier** (England)
+34. **Japanese Chin** (Japan)
+35. **Labrador Retriever** (Canada)
+36. **Leonberger** (Germany)
+37. **Maltese** (Mediterranean)
+38. **Maltipoo** (USA)
+39. **Mastiff** (England)
+40. **Miniature Pinscher** (Germany)
+41. **Miniature Schnauzer** (Germany)
+42. **Newfoundland** (Canada)
+43. **Papillon** (France)
+44. **Pekingese** (China)
+45. **Pembroke Welsh Corgi** (Wales)
+46. **Pomeranian** (Germany)
+47. **Pug** (China)
+48. **Rottweiler** (Germany)
+49. **Rough/Smooth Collie** (Scotland)
+50. **Saint Bernard** (Switzerland)
+51. **Shiba Inu** (Japan)
+52. **Shih Tzu** (Tibet)
+53. **Siberian Husky** (Russia)
+54. **Staffordshire Bull Terrier** (England)
+55. **Standard Schnauzer** (Germany)
+56. **Toy Poodle** (France)
+57. **Weimaraner** (Germany)
+58. **West Highland White Terrier** (Scotland)
+59. **Whippet** (England)
+60. **Yorkshire Terrier** (England)
+
+---
+
+## 📚 Research Base & Citation Sources
+Longevity data and diagnostic health triggers are modeled after peer-reviewed veterinary studies:
+1. **Longevity Study (Royal Veterinary College, 2022)**: Confirmed that smaller, dolichocephalic (long-faced) breeds have the longest lifespans (median 13.3 years), whereas large flat-faced (brachycephalic) breeds have a significantly lower life expectancy (median 7.8 years).
+2. **Canine Mortality (University of Georgia, 2011)**: Established breed-specific cancer rates, cardiovascular issues, and orthopedic risks used to trigger automated health alerts in the diagnostics interface.
+3. **Biometric Growth Curves**: Formulated utilizing standard AKC growth equations and Royal Canin pediatric veterinary reference intervals.

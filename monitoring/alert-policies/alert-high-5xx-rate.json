@@ -1,0 +1,54 @@
+{
+  "displayName": "DogHealthOS - High 5xx Error Rate (>1% over 5m)",
+  "documentation": {
+    "content": "## High 5xx Error Rate Alert\n\n**Threshold Breached:** Over 1.0% of incoming HTTP requests to DogHealthOS on Cloud Run are returning 5xx server errors over a 5-minute rolling window.\n\n### Immediate Action Required:\n1. Check Cloud Logging structured JSON logs for severity=ERROR.\n2. Verify Node process memory and upstream Gemini API status.\n3. If regressions detected, execute rollback: `gcloud run services update-traffic doghealthos-prod --to-revisions=PREV_REV=100`.\n\n**Notification Recipient:** anthonytoudou@gmail.com\n**Severity:** CRITICAL (Pager / Immediate Email)",
+    "mimeType": "text/markdown"
+  },
+  "conditions": [
+    {
+      "displayName": "5xx error rate exceeds 1% of total requests",
+      "conditionThreshold": {
+        "filter": "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"doghealthos-prod\" AND metric.type = \"run.googleapis.com/request_count\" AND metric.labels.response_code_class = \"5xx\"",
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 0.01,
+        "duration": "300s",
+        "aggregations": [
+          {
+            "alignmentPeriod": "300s",
+            "perSeriesAligner": "ALIGN_RATE",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "groupByFields": [
+              "resource.labels.service_name"
+            ]
+          }
+        ],
+        "denominatorFilter": "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"doghealthos-prod\" AND metric.type = \"run.googleapis.com/request_count\"",
+        "denominatorAggregations": [
+          {
+            "alignmentPeriod": "300s",
+            "perSeriesAligner": "ALIGN_RATE",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "groupByFields": [
+              "resource.labels.service_name"
+            ]
+          }
+        ],
+        "trigger": {
+          "count": 1
+        }
+      }
+    }
+  ],
+  "combiner": "OR",
+  "enabled": true,
+  "notificationChannels": [
+    "projects/${PROJECT_ID}/notificationChannels/${CHANNEL_EMAIL_ID}",
+    "projects/${PROJECT_ID}/notificationChannels/${CHANNEL_SMS_ID}"
+  ],
+  "alertStrategy": {
+    "autoClose": "1800s",
+    "notificationRateLimit": {
+      "period": "300s"
+    }
+  }
+}

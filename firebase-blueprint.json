@@ -1,0 +1,60 @@
+{
+  "collections": {
+    "feedback": {
+      "description": "User satisfaction ratings, commentary, and breed configuration context.",
+      "schema": {
+        "userId": "string",
+        "userEmail": "string",
+        "rating": "number",
+        "comment": "string",
+        "breed": "string",
+        "age": "number",
+        "timestamp": "timestamp"
+      }
+    },
+    "user_logs": {
+      "description": "Audit trails logging user actions, calculations, AI chat sessions, and diagnostics.",
+      "schema": {
+        "userId": "string",
+        "userEmail": "string",
+        "action": "string",
+        "details": "map",
+        "userAgent": "string",
+        "timestamp": "timestamp"
+      }
+    },
+    "live_faqs": {
+      "description": "The curated top 6 published customer FAQs updated quarterly based on user query analytics.",
+      "schema": {
+        "q": "string",
+        "a": "string",
+        "category": "string",
+        "frequencyCount": "number",
+        "order": "number",
+        "lastUpdated": "timestamp"
+      }
+    },
+    "vet_appointments": {
+      "description": "Veterinary check-up appointments, vaccination logs, and age-stage health milestones.",
+      "schema": {
+        "userId": "string",
+        "petName": "string",
+        "breed": "string",
+        "dogAge": "number",
+        "healthStage": "string",
+        "title": "string",
+        "type": "string",
+        "date": "string",
+        "time": "string",
+        "clinicName": "string",
+        "vetName": "string",
+        "notes": "string",
+        "checklist": "string",
+        "status": "string",
+        "isRecommended": "boolean",
+        "completedAt": "string",
+        "timestamp": "timestamp"
+      }
+    }
+  }
+}

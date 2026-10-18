@@ -1,0 +1,22 @@
+{
+  "channels": [
+    {
+      "type": "email",
+      "displayName": "Anthony Toudou (Production Alert Email)",
+      "description": "Primary notification channel for DogHealthOS production critical alerts and P1 incidents",
+      "labels": {
+        "email_address": "anthonytoudou@gmail.com"
+      },
+      "enabled": true
+    },
+    {
+      "type": "sms",
+      "displayName": "Anthony Toudou (SMS Emergency Pager)",
+      "description": "SMS channel for high 5xx error rate and container failure escalations",
+      "labels": {
+        "number": "+1-555-DOG-OS-ALERT"
+      },
+      "enabled": true
+    }
+  ]
+}

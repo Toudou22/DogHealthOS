@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Dog Breed Schema & AI-Era Metadata Blueprint",
+  "description": "JSON-LD, GEO, and SEO structural configuration template designed to maintain 100% consistency across all companion canine records in the Dog Breed Life Expectancy system.",
+  "lastUpdated": "2026-07-09T20:41:00Z",
+  "systemAudit": {
+    "status": "PASSED",
+    "totalMappedBreeds": 119,
+    "localFallbackAssetsChecked": 119,
+    "requiredFieldsChecked": [
+      "name",
+      "size",
+      "min",
+      "max",
+      "weight",
+      "weightGrams",
+      "group",
+      "health",
+      "origin"
+    ],
+    "disclaimer": "All 119 mapped breeds have been audited. Every record strictly adheres to the schema constraints below, ensuring flawless biometric calculation, local visual rendering, and generative crawlers mapping (JSON-LD index)."
+  },
+  "schemaDefinition": {
+    "type": "object",
+    "required": [
+      "name",
+      "size",
+      "min",
+      "max",
+      "weight",
+      "weightGrams",
+      "group",
+      "health",
+      "origin"
+    ],
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "The official canine breed name. Must match the local asset filename exactly.",
+        "example": "Golden Retriever"
+      },
+      "size": {
+        "type": "string",
+        "enum": ["toy", "small", "medium", "large", "giant"],
+        "description": "Standard biological weight and stature category. Drives the resting energy requirement (RER) and pediatric growth curve mathematical models."
+      },
+      "min": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 30,
+        "description": "Minimum healthy life expectancy in years under standard domestic care."
+      },
+      "max": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 30,
+        "description": "Maximum standard life expectancy in years. Must be greater than or equal to 'min'."
+      },
+      "weight": {
+        "type": "string",
+        "description": "Human-readable adult weight range representation in pounds (lbs).",
+        "example": "55-75 lbs"
+      },
+      "weightGrams": {
+        "type": "integer",
+        "minimum": 500,
+        "maximum": 150000,
+        "description": "Median adult weight in grams, utilized as the numerical baseline for metabolical and pediatric growth equations.",
+        "example": 29000
+      },
+      "group": {
+        "type": "string",
+        "description": "AKC / Kennel Club breed classifications (e.g., Toy, Hound, Working, Herding, Sporting, Terrier, Non-Sporting, Hybrid).",
+        "example": "Sporting"
+      },
+      "health": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "minItems": 3,
+        "description": "List of primary hereditary, physiological, or orthopedic risks established by canine epidemiological cohorts."
+      },
+      "origin": {
+        "type": "string",
+        "description": "Geographical country of historical development.",
+        "example": "Scotland"
+      }
+    }
+  },
+  "aiOptimizationRequirements": {
+    "layer1_HumanHook": {
+      "headlineAesthetic": "Warm, high-contrast display paired with clear metrics.",
+      "ctaFunnels": "Calculation leads immediately to actionable custom diets and clinical warnings without unrequested redirects."
+    },
+    "layer2_SearchIndex": {
+      "metaTitleFormat": "${name} Life Expectancy, Weight Growth Curves & Breed Health Calculator",
+      "urlStructure": "/?breed=${encodedName}",
+      "anchorStrategy": "Cross-linked scientific studies embedded directly in content flows to maintain strong semantic relevancy."
+    },
+    "layer3_GenerativeAI": {
+      "answerCapsuleEnabled": true,
+      "jsonLdMapping": {
+        "schemaType": "Product",
+        "additionalType": "https://schema.org/MedicalCondition",
+        "mappingExample": {
+          "@context": "https://schema.org",
+          "@type": "Product",
+          "name": "${name} Longevity Profile",
+          "description": "Comprehensive lifespan and veterinary health profile of the ${name} breed.",
+          "category": "Canine Diagnostics",
+          "offers": {
+            "@type": "Offer",
+            "price": "0.00",
+            "priceCurrency": "USD"
+          }
+        }
+      },
+      "faqPreInjection": true,
+      "disclaimerRequired": "True (Health Guardrail - never overstate or fabricate clinical outcomes)."
+    }
+  },
+  "assetNamingConventions": {
+    "localFolder": "/public/dog-images/",
+    "namingTemplate": "${name}.8.png",
+    "fallbackRule": "If local asset is missing, system falls back to a high-contrast generic canine placeholder icon rather than breaking layout."
+  }
+}

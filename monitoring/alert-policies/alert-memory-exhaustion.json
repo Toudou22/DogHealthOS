@@ -1,0 +1,43 @@
+{
+  "displayName": "DogHealthOS - Container Memory Exhaustion (>85% of 1GB)",
+  "documentation": {
+    "content": "## Container Memory Exhaustion Alert\n\n**Threshold Breached:** Container memory utilization exceeded 85% of allocated 1GiB RAM (>870MB) for more than 5 minutes.\n\n### Recommended Actions:\n1. Cloud Run auto-scaler triggers additional instances.\n2. Review heap dump and active in-memory audio buffers (`node-edge-tts` streaming chunks).\n3. Check Node.js garbage collection metrics via `/api/audit`.\n4. Increase container memory to 2Gi if persistent under legitimate heavy concurrent voice traffic.\n\n**Notification Recipient:** anthonytoudou@gmail.com\n**Action:** Auto-scale trigger & memory leak diagnostic review",
+    "mimeType": "text/markdown"
+  },
+  "conditions": [
+    {
+      "displayName": "Container memory utilization exceeds 85%",
+      "conditionThreshold": {
+        "filter": "resource.type = \"cloud_run_revision\" AND resource.labels.service_name = \"doghealthos-prod\" AND metric.type = \"run.googleapis.com/container/memory/utilizations\"",
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 0.85,
+        "duration": "300s",
+        "aggregations": [
+          {
+            "alignmentPeriod": "300s",
+            "perSeriesAligner": "ALIGN_MEAN",
+            "crossSeriesReducer": "REDUCE_MAX",
+            "groupByFields": [
+              "resource.labels.service_name"
+            ]
+          }
+        ],
+        "trigger": {
+          "count": 1
+        }
+      }
+    }
+  ],
+  "combiner": "OR",
+  "enabled": true,
+  "notificationChannels": [
+    "projects/${PROJECT_ID}/notificationChannels/${CHANNEL_EMAIL_ID}",
+    "projects/${PROJECT_ID}/notificationChannels/${CHANNEL_SMS_ID}"
+  ],
+  "alertStrategy": {
+    "autoClose": "1800s",
+    "notificationRateLimit": {
+      "period": "300s"
+    }
+  }
+}

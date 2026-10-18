@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      // Safe compatibility patch for environments where window.fetch has only a getter
+      try {
+        let _fetch = window.fetch || globalThis.fetch;
+        if (_fetch) {
+          try {
+            Object.defineProperty(window, 'fetch', {
+              get() { return _fetch; },
+              set(fn) { _fetch = fn; },
+              configurable: true,
+              enumerable: true
+            });
+          } catch (_) {
+            try {
+              Object.defineProperty(Window.prototype, 'fetch', {
+                get() { return _fetch; },
+                set(fn) { _fetch = fn; },
+                configurable: true,
+                enumerable: true
+              });
+            } catch (__) {}
+          }
+        }
+      } catch (e) {
+        // Ignore if unconfigurable
+      }
+    </script>
+
+    <!-- Layer 1: Human Hook & Layer 2: Search Index Metadata -->
+    <title>Dog Breed Life Expectancy & Clinical Care Platform | DogHealthOS</title>
+    <meta name="description" content="Discover companion dog life expectancy, metabolic calorie needs, developmental milestones, and clinical AI diagnostics. Calibrated against peer-reviewed Royal Veterinary College and University of Georgia datasets." />
+    <meta name="keywords" content="dog breed life expectancy, dog lifespan by weight, canine health risk diagnostics, puppy weight milestone chart, veterinary nutritional portion advisor, dog longevity factors, dog health os" />
+    <meta name="author" content="DogHealthOS Clinical Registry" />
+    <meta name="last-modified" content="2026-07-06T17:00:00Z" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- Open Graph Protocol (Social Visibility) -->
+    <meta property="og:title" content="Dog Breed Life Expectancy & Clinical Care Platform | DogHealthOS" />
+    <meta property="og:description" content="Discover companion dog life expectancy, metabolic calorie needs, developmental milestones, and clinical AI diagnostics. Calibrated against peer-reviewed Royal Veterinary College and University of Georgia datasets." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://ais-pre-xasmajlo4ibmlxoqh2eyam-28567500933.us-east1.run.app/" />
+    <meta property="og:image" content="/dog-images/Golden%20Retriever.8.png" />
+    <meta property="og:site_name" content="DogHealthOS" />
+
+    <!-- Twitter Card Protocols -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Dog Breed Life Expectancy & Clinical Care Platform | DogHealthOS" />
+    <meta name="twitter:description" content="Discover companion dog life expectancy, metabolic calorie needs, developmental milestones, and clinical AI diagnostics. Calibrated against peer-reviewed Royal Veterinary College and University of Georgia datasets." />
+    <meta name="twitter:image" content="/dog-images/Golden%20Retriever.8.png" />
+
+    <!-- Layer 3: Generative AI JSON-LD Schema Graphs (Crawlable Rich Snippets) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://ais-pre-xasmajlo4ibmlxoqh2eyam-28567500933.us-east1.run.app/#software",
+          "name": "Dog Breed Life Expectancy & Health Calculator",
+          "applicationCategory": "HealthApplication",
+          "operatingSystem": "All",
+          "offers": {
+            "@type": "Offer",
+            "price": "0.00",
+            "priceCurrency": "USD"
+          },
+          "description": "An interactive clinical model that predicts canine longevity by analyzing multi-factor inputs such as breed genetics, adult weight, daily physical activity, diet quality, and underlying disease markers."
+        },
+        {
+          "@type": "WebPage",
+          "@id": "https://ais-pre-xasmajlo4ibmlxoqh2eyam-28567500933.us-east1.run.app/",
+          "url": "https://ais-pre-xasmajlo4ibmlxoqh2eyam-28567500933.us-east1.run.app/",
+          "name": "Dog Breed Life Expectancy & Health Calculator",
+          "isPartOf": {
+            "@id": "https://ais-pre-xasmajlo4ibmlxoqh2eyam-28567500933.us-east1.run.app/#website"
+          },
+          "about": [
+            {
+              "@type": "MedicalCondition",
+              "name": "Canine Lifespan Determination"
+            }
+          ],
+          "citation": [
+            "Royal Veterinary College (2022) Life Expectancy Study of 30,563 Companion Dogs",
+            "University of Georgia (2011) Veterinary Medical Database Analysis of 74,556 Dogs"
+          ],
+          "dateModified": "2026-07-06T17:00:00Z"
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How long do small dog breeds live compared to large breeds?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Small dog breeds have a significantly longer life expectancy than large and giant breeds. According to veterinary research published by the Royal Veterinary College in 2022, small breeds achieve a median lifespan of 13.3 years, whereas large breeds often show a median lifespan of 7.8 to 9.5 years. This longevity disparity is primarily driven by rapid physical development and accelerated cellular aging in larger breeds."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Are flat-faced (brachycephalic) dog breeds at higher risk for early mortality?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, brachycephalic or flat-faced dog breeds face a higher risk of early mortality due to anatomical conformations. Studies confirm that breeds like the French Bulldog and Pug have a median life expectancy of only 4.5 to 7.8 years. These shortened lifespans are strongly linked to brachycephalic obstructive airway syndrome (BOAS), increased cardiovascular strain, and spinal disk vulnerabilities."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I calculate my dog's daily calorie needs by breed size?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "To calculate your dog's daily calorie needs, first determine their resting energy requirement (RER) using the veterinary formula: RER = 70 * (weight in kg)^0.75. This base RER is then multiplied by an activity factor ranging from 1.0 for sedentary or senior dogs to 1.6 for active adults and 3.0 for growing puppies, tailoring portions to prevent metabolic disease and obesity."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I track my puppy's growth milestone against veterinary charts?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Puppy growth can be tracked by plotting weekly weights against standard canine biometric growth curves. Smaller breeds reach their mature weight and skeletal growth around 10 to 12 months, whereas large and giant breeds continue growing until 18 to 24 months. Monitoring these development curves helps identify nutritional imbalances or joint vulnerabilities early."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What are the main health risks that affect dog life expectancy?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Dog life expectancy is primarily affected by genetic liabilities, neoplastic diseases, cardiovascular failures, and musculoskeletal disorders. The University of Georgia (2011) study of 74,556 dogs noted that certain breeds have distinct predispositions, such as bone cancer (osteosarcoma) in Great Danes or mitral valve disease in Cavalier King Charles Spaniels, highlighting the importance of breed-specific diagnostics."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does exercise and nutrition affect canine longevity?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Consistent moderate exercise and balanced nutrition are primary modifiable factors that increase canine longevity. Maintaining an ideal body condition score (BCS) of 4 or 5 on a 9-point scale has been shown to extend a dog's lifespan by up to 2.5 years compared to overweight dogs, as obesity accelerates metabolic decline, worsens osteoarthritis, and increases cancer risk."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <!-- Semantic, Crawlable HTML Static Backup (GEO/AI Extraction Layer) -->
+    <!-- This section is read by AI crawlers instantly without requiring client JS evaluation -->
+    <noscript>
+      <div id="seo-geo-fallback-payload" style="padding: 2rem; max-width: 800px; margin: 0 auto; font-family: sans-serif; line-height: 1.6;">
+        <h1>Dog Breed Life Expectancy & Health Calculator</h1>
+        <p><strong>Published & Verified:</strong> 2026-07-06</p>
+        
+        <h2>AI-Era Answer Capsule</h2>
+        <p>
+          A dog breed life expectancy calculator is an interactive clinical model that predicts canine longevity by analyzing multi-factor inputs such as breed genetics, adult weight, daily physical activity, diet quality, and underlying disease markers. By mapping individual biometrics against established epidemiological datasets, it calculates personalized life expectancy intervals to help owners optimize preventative care.
+        </p>
+
+        <h2>Clinical Veterinary Evidence Base</h2>
+        <p>
+          Our canine longevity algorithm is calibrated against peer-reviewed veterinary studies to deliver precise life expectancy and physiological tracking. According to the groundbreaking <strong>Royal Veterinary College (2022) study</strong> of 30,563 companion dogs, smaller dolichocephalic (long-faced) breeds have the longest lifespans with a <strong>median life expectancy of 13.3 years</strong>, while large brachycephalic (flat-faced) breeds have a significantly higher hazard ratio and a <strong>median life expectancy of just 7.8 years</strong>.
+        </p>
+        <p>
+          Additionally, the <strong>University of Georgia's (2011) landmark analysis</strong> of 74,556 canine medical histories reveals that breed size and breed-specific genetic liabilities strongly correlate with primary causes of mortality, such as cancer in golden retrievers (60.2% mortality rate) and cardiac disease in cavalier king charles spaniels. Our calculator synthesizes these veterinary data streams with real-time biometric growth curves to offer targeted nutritional adjustments, environmental safety metrics, and automated health checks designed to improve canine life quality.
+        </p>
+
+        <h2>Conversational FAQ Reference Core</h2>
+        
+        <h3>How long do small dog breeds live compared to large breeds?</h3>
+        <p>
+          Small dog breeds have a significantly longer life expectancy than large and giant breeds. According to veterinary research published by the Royal Veterinary College in 2022, small breeds achieve a median lifespan of 13.3 years, whereas large breeds often show a median lifespan of 7.8 to 9.5 years. This longevity disparity is primarily driven by rapid physical development and accelerated cellular aging in larger breeds.
+        </p>
+
+        <h3>Are flat-faced (brachycephalic) dog breeds at higher risk for early mortality?</h3>
+        <p>
+          Yes, brachycephalic or flat-faced dog breeds face a higher risk of early mortality due to anatomical conformations. Studies confirm that breeds like the French Bulldog and Pug have a median life expectancy of only 4.5 to 7.8 years. These shortened lifespans are strongly linked to brachycephalic obstructive airway syndrome (BOAS), increased cardiovascular strain, and spinal disk vulnerabilities.
+        </p>
+
+        <h3>How do I calculate my dog's daily calorie needs by breed size?</h3>
+        <p>
+          To calculate your dog's daily calorie needs, first determine their resting energy requirement (RER) using the veterinary formula: RER = 70 * (weight in kg)^0.75. This base RER is then multiplied by an activity factor ranging from 1.0 for sedentary or senior dogs to 1.6 for active adults and 3.0 for growing puppies, tailoring portions to prevent metabolic disease and obesity.
+        </p>
+
+        <h3>How do I track my puppy's growth milestone against veterinary charts?</h3>
+        <p>
+          Puppy growth can be tracked by plotting weekly weights against standard canine biometric growth curves. Smaller breeds reach their mature weight and skeletal growth around 10 to 12 months, whereas large and giant breeds continue growing until 18 to 24 months. Monitoring these development curves helps identify nutritional imbalances or joint vulnerabilities early.
+        </p>
+
+        <h3>What are the main health risks that affect dog life expectancy?</h3>
+        <p>
+          Dog life expectancy is primarily affected by genetic liabilities, neoplastic diseases, cardiovascular failures, and musculoskeletal disorders. The University of Georgia (2011) study of 74,556 dogs noted that certain breeds have distinct predispositions, such as bone cancer (osteosarcoma) in Great Danes or mitral valve disease in Cavalier King Charles Spaniels, highlighting the importance of breed-specific diagnostics.
+        </p>
+
+        <h3>How does exercise and nutrition affect canine longevity?</h3>
+        <p>
+          Consistent moderate exercise and balanced nutrition are primary modifiable factors that increase canine longevity. Maintaining an ideal body condition score (BCS) of 4 or 5 on a 9-point scale has been shown to extend a dog's lifespan by up to 2.5 years compared to overweight dogs, as obesity accelerates metabolic decline, worsens osteoarthritis, and increases cancer risk.
+        </p>
+
+        <footer>
+Designed by TOUDOU DIGITAL — Copyright © 2026 TOUDOU DIGITAL
+        </footer>
+      </div>
+    </noscript>
+
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,43 @@
+{
+  "displayName": "DogHealthOS - Firebase Security Rule Rejections (>10 in 5m)",
+  "documentation": {
+    "content": "## Firebase Security Rule Rejections Alert\n\n**Threshold Breached:** Detected > 10 `permission-denied` rule rejections within a 5-minute rolling window on Cloud Firestore.\n\n### Potential Threat Vector:\n- Possible unauthorized enumeration attempt against user profiles or pet medical records.\n- Stale or corrupted authentication token in client frontend sessions.\n- Misconfigured API role or unauthorized direct Firestore REST queries.\n\n### Immediate Action:\n1. Inspect Cloud Logging filter: `resource.type=\"firestore_database\" AND severity>=WARNING`.\n2. Verify originating IP addresses and user UIDs.\n3. Rate-limit or block offending network prefixes if malicious enumeration is confirmed.\n\n**Notification Recipient:** anthonytoudou@gmail.com\n**Action:** Security audit alert (potential unauthorized enumeration)",
+    "mimeType": "text/markdown"
+  },
+  "conditions": [
+    {
+      "displayName": "Firestore permission-denied rule evaluations exceed 10 in 5m",
+      "conditionThreshold": {
+        "filter": "resource.type = \"firestore_database\" AND metric.type = \"firestore.googleapis.com/rules/evaluation_count\" AND metric.labels.evaluation_result = \"deny\"",
+        "comparison": "COMPARISON_GT",
+        "thresholdValue": 10,
+        "duration": "300s",
+        "aggregations": [
+          {
+            "alignmentPeriod": "300s",
+            "perSeriesAligner": "ALIGN_DELTA",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "groupByFields": [
+              "resource.labels.database_id"
+            ]
+          }
+        ],
+        "trigger": {
+          "count": 1
+        }
+      }
+    }
+  ],
+  "combiner": "OR",
+  "enabled": true,
+  "notificationChannels": [
+    "projects/${PROJECT_ID}/notificationChannels/${CHANNEL_EMAIL_ID}",
+    "projects/${PROJECT_ID}/notificationChannels/${CHANNEL_SMS_ID}"
+  ],
+  "alertStrategy": {
+    "autoClose": "1800s",
+    "notificationRateLimit": {
+      "period": "300s"
+    }
+  }
+}
