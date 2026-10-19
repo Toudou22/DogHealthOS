@@ -7,6 +7,7 @@ import { getCanineCognitiveArchetype, getAgeCalibratedActivityPlan, getDaycareCo
 export interface LifespanDossierData {
   breed: Breed;
   age: number;
+  petName?: string;
   currentWeight: number;
   unit: 'lbs' | 'kg';
   bcsScore: number;
@@ -271,7 +272,7 @@ export async function generateLifespanClinicalDossierPDF(data: LifespanDossierDa
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(226, 232, 240);
-    doc.text(`Official Document Issued: ${formattedTimestamp} | Subject: ${breed.name}`, textX, 23);
+    doc.text(`Official Document Issued: ${formattedTimestamp} | Subject: ${data.petName ? `${data.petName} (${breed.name})` : breed.name}`, textX, 23);
     doc.text("DogHealthOS™ Institutional Preventative Care & Longitudinal Trajectory Analysis", textX, 29);
     doc.text("Certified AAHA / WSAVA / NRC Standards • RVC VetCompass™ Validated", textX, 35);
     doc.text(`SECURITY: ENTERPRISE AUDITED  |  DOSSIER ID: DOS-${dossierId}  |  ACTIVE`, textX, 40);
@@ -284,7 +285,7 @@ export async function generateLifespanClinicalDossierPDF(data: LifespanDossierDa
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
     doc.setTextColor(226, 232, 240);
-    doc.text(`Official Document Issued: ${formattedTimestamp} | Patient Subject: ${breed.name}`, MARGIN_LEFT, 23);
+    doc.text(`Official Document Issued: ${formattedTimestamp} | Patient Subject: ${data.petName ? `${data.petName} (${breed.name})` : breed.name}`, MARGIN_LEFT, 23);
     doc.text("DogHealthOS™ Institutional Preventative Care & Longitudinal Trajectory Analysis • Certified AAHA / WSAVA / NRC Standards", MARGIN_LEFT, 29);
     doc.text(`SECURITY LEVEL: ENTERPRISE AUDITED  |  DOSSIER ID: DOS-${dossierId}  |  STATUS: CLINICAL EVIDENCE ACTIVE`, MARGIN_LEFT, 35);
   }
@@ -295,7 +296,7 @@ export async function generateLifespanClinicalDossierPDF(data: LifespanDossierDa
   drawSectionTitle("1. Comprehensive Biometric Profile & Vital Statistics", "Evidence-based physiological baseline calibrated against RVC and AKC breed standards", "Chapter 1: Biometric Profile");
 
   const bioRows = [
-    ["Patient Subject Breed:", breed.name],
+    ["Patient Subject / Name:", data.petName ? `${data.petName} (${breed.name})` : breed.name],
     ["Canine Breed Group / Archetype:", `${breed.group || 'Companion / Working'} (Size: ${breed.size.toUpperCase()})`],
     ["Skeletal Size Classification:", `${breed.size.toUpperCase()} (${breed.size === 'toy' ? '<10 lbs' : breed.size === 'small' ? '10-25 lbs' : breed.size === 'medium' ? '25-50 lbs' : breed.size === 'large' ? '50-90 lbs' : '>90 lbs'})`],
     ["Current Calendar Age:", `${age} Years Old (${Math.round(age * 12)} Months Chronological Age)`],

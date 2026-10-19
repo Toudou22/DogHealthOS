@@ -297,6 +297,7 @@ const FALLBACK_TIPS: Record<string, Record<string, {title: string, tip: string}>
 interface ResultsDisplayProps {
   breed: Breed;
   age: number;
+  petName?: string;
   onOpenProfileModal?: (breed: Breed) => void;
   onOpenVaultModal?: () => void;
   onOpenAudioPassport?: (ctx?: {
@@ -307,7 +308,7 @@ interface ResultsDisplayProps {
   }) => void;
 }
 
-export default function ResultsDisplay({ breed, age, onOpenProfileModal, onOpenVaultModal, onOpenAudioPassport }: ResultsDisplayProps) {
+export default function ResultsDisplay({ breed, age, petName, onOpenProfileModal, onOpenVaultModal, onOpenAudioPassport }: ResultsDisplayProps) {
   const [unit, setUnit] = useState<'lbs' | 'kg'>('lbs');
   const [bcsScore, setBcsScore] = useState<number>(5);
   const [isPlayingSpokenPlan, setIsPlayingSpokenPlan] = useState<boolean>(false);
@@ -889,6 +890,7 @@ Check out your pet's milestones at DogHealthOS!`;
       await generateLifespanClinicalDossierPDF({
         breed,
         age,
+        petName,
         currentWeight,
         unit,
         bcsScore,
@@ -937,12 +939,14 @@ Check out your pet's milestones at DogHealthOS!`;
     const stageDesc = stage.name;
     const kg = (currentWeight * (unit === 'lbs' ? 0.453592 : 1)).toFixed(1);
     const rerCal = Math.round(70 * Math.pow(Math.max(1, parseFloat(kg)), 0.75));
+    const nameStr = petName?.trim() ? petName.trim() : `your wonderful ${breed.name}`;
+    const companionName = petName?.trim() ? `${petName.trim()}` : `your companion`;
     return `Hello there, pet parent. I'm Dr. Barnes, Senior Veterinary Clinician here at DogHealthOS. 
-It is a true pleasure to review the clinical longevity plan for your wonderful ${breed.name}. 
-At ${age} years of age, in the ${stageDesc} stage of life, and weighing ${currentWeight} ${unit}, your companion's basal resting metabolism requires approximately ${rerCal} calories each day. 
+It is a true pleasure to review the clinical longevity plan for ${nameStr}. 
+At ${age} years of age, in the ${stageDesc} stage of life, and weighing ${currentWeight} ${unit}, ${companionName}'s basal resting metabolism requires approximately ${rerCal} calories each day. 
 Our most important clinical goal together is keeping their Body Condition Score at an ideal, lean 4 to 5. Decades of veterinary studies prove that this single habit can add up to two and a half vibrant, happy years to your dog's life. 
 Right now, our core daily priorities are gentle teeth brushing to protect their heart and kidneys, low-impact exercise for joint health, and regular preventive checkups. 
-You are doing a truly wonderful job caring for your companion. You can download this verified audio passport anytime to share with your family veterinarian.`;
+You are doing a truly wonderful job caring for ${companionName}. You can download this verified audio passport anytime to share with your family veterinarian.`;
   };
 
   const handleTogglePlaySpokenPlan = () => {
@@ -978,7 +982,7 @@ You are doing a truly wonderful job caring for your companion. You can download 
           <div className="flex flex-wrap items-center gap-2.5">
             <Sparkles className="w-5 h-5 text-[#E5A836]" />
             <h4 className="text-sm font-black uppercase tracking-widest text-[#1A1A1A] dark:text-[#F0ECE6]">
-              {breed.name} Companion Dossier
+              {petName?.trim() ? `${petName.trim()}'s ${breed.name} Companion Dossier` : `${breed.name} Companion Dossier`}
             </h4>
             {tipOfTheDay && (
               <span className="px-2.5 py-0.5 rounded-full bg-[#FF6B4A]/20 text-[#FF6B4A] border border-[#FF6B4A]/30 text-[0.62rem] font-black uppercase tracking-wider">
@@ -998,7 +1002,7 @@ You are doing a truly wonderful job caring for your companion. You can download 
                 type="button"
                 onClick={() => onOpenAudioPassport({
                   planType: 'passport',
-                  petName: breed.name,
+                  petName: petName?.trim() || breed.name,
                   voice: 'Fenrir',
                   customText: generateSpokenBriefingText()
                 })}
@@ -1114,7 +1118,7 @@ You are doing a truly wonderful job caring for your companion. You can download 
                 )}
               </div>
               <p className="text-[0.72rem] text-stone-600 dark:text-stone-300 mt-0.5">
-                Multi-modal veterinary audio briefing for <strong>{breed.name}</strong> (Age {age} • {stage.name} Stage). Listen to clinical caloric targets, BCS priorities, and longevity checkpoints.
+                Multi-modal veterinary audio briefing for <strong>{petName?.trim() ? `${petName.trim()} (${breed.name})` : breed.name}</strong> (Age {age} • {stage.name} Stage). Listen to clinical caloric targets, BCS priorities, and longevity checkpoints.
               </p>
             </div>
           </div>
