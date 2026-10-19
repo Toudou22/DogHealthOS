@@ -320,74 +320,18 @@ export default function App() {
 
       <main className="relative z-10 max-w-5xl w-full mx-auto px-4 py-8 sm:py-10 flex-1 flex flex-col gap-8 sm:gap-10">
         
-        {/* Hero Header Block with Top-Right Breed Showcase */}
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 animate-[fadeIn_0.5s_ease-out]">
-          <div className="flex flex-col gap-3 max-w-xl">
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#1A1A1A] dark:text-[#F0ECE6] leading-[1.08]">
-              Dog Breed <br />
-              <span className="text-[#FF6B4A]">Life Expectancy</span> Calculator
-            </h1>
-            
-            <p className="text-sm sm:text-base text-[#8A8680] dark:text-[#9A9590] leading-relaxed">
-              Discover your companion’s personalized timeline, life stage conversion, and evidence-based clinical health insights — adjusted by breed genetics and age.
-            </p>
+        {/* Clean Hero Header Block */}
+        <header className="flex flex-col gap-3 animate-[fadeIn_0.5s_ease-out]">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#1A1A1A] dark:text-[#F0ECE6] leading-[1.08]">
+            Dog Breed <br />
+            <span className="text-[#FF6B4A]">Life Expectancy</span> Calculator
+          </h1>
+          
+          <p className="max-w-2xl text-sm sm:text-base text-[#8A8680] dark:text-[#9A9590] leading-relaxed">
+            Discover your companion’s personalized timeline, life stage conversion, and evidence-based clinical health insights — adjusted by breed genetics and age.
+          </p>
 
-            <div className="w-16 h-1 bg-[#FF6B4A] rounded-full mt-1" />
-          </div>
-
-          {/* Top Right High-Res Breed Showcase Card */}
-          <div className="shrink-0 w-full md:w-80 bg-white/70 dark:bg-[#282420]/80 backdrop-blur-xl border-[2.5px] border-[#1A1A1A] dark:border-[#F0ECE6] shadow-[4px_4px_0_#1A1A1A] dark:shadow-[4px_4px_0_#F0ECE6] rounded-2xl p-4 flex flex-col items-center text-center transition-all">
-            {selectedBreed ? (
-              <div className="w-full flex flex-col items-center gap-2">
-                <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-xl overflow-hidden border-2 border-[#1A1A1A] dark:border-[#F0ECE6] shadow-[2.5px_2.5px_0_#1A1A1A] dark:shadow-[2.5px_2.5px_0_#F0ECE6] bg-amber-500/10">
-                  <img
-                    src={getBreedImagePath(selectedBreed.name) || ''}
-                    alt={selectedBreed.name}
-                    className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-500"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                  <div className="absolute top-1 right-1 px-1.5 py-0.5 rounded bg-[#1A1A1A] text-white text-[0.55rem] font-mono font-bold uppercase">
-                    {selectedBreed.size}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-black text-sm text-[#1A1A1A] dark:text-[#F0ECE6] leading-tight">
-                    {petName ? `${petName} (${selectedBreed.name})` : selectedBreed.name}
-                  </h3>
-                  <div className="flex items-center justify-center gap-1.5 mt-1 flex-wrap">
-                    <span className="px-2 py-0.5 rounded-full bg-[#FF6B4A]/15 text-[#FF6B4A] font-mono text-[0.62rem] font-black border border-[#FF6B4A]/30">
-                      {selectedBreed.min}-{selectedBreed.max} Yrs Expectancy
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-[#2D8C6F]/15 text-[#2D8C6F] font-mono text-[0.62rem] font-bold border border-[#2D8C6F]/30">
-                      {selectedBreed.group}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setProfileModalBreed(selectedBreed)}
-                  className="mt-1 w-full py-1.5 text-[0.68rem] font-black uppercase tracking-wider bg-amber-400 hover:bg-amber-300 text-[#1A1A1A] rounded-lg border-2 border-[#1A1A1A] shadow-[2px_2px_0_#1A1A1A] transition-all cursor-pointer active:scale-95"
-                >
-                  View Breed Dossier
-                </button>
-              </div>
-            ) : (
-              <div className="w-full py-2 px-1 flex flex-col items-center text-center gap-2">
-                <div className="w-14 h-14 rounded-full bg-[#FF6B4A]/10 border-2 border-[#1A1A1A] dark:border-[#F0ECE6] flex items-center justify-center text-2xl shadow-[2px_2px_0_#1A1A1A] dark:shadow-[2px_2px_0_#F0ECE6]">
-                  🐕
-                </div>
-                <div>
-                  <span className="block text-xs font-black uppercase tracking-wider text-[#1A1A1A] dark:text-[#F0ECE6]">
-                    Breed Photo & Profile Showcase
-                  </span>
-                  <p className="text-[0.72rem] text-[#8A8680] dark:text-[#9A9590] mt-1 leading-snug">
-                    Select your dog's breed below to render their high-res photo, genetics, and personalized lifespan plan!
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
+          <div className="w-16 h-1 bg-[#FF6B4A] rounded-full mt-1" />
         </header>
 
         {/* Search Panel / Input Bench Grid */}

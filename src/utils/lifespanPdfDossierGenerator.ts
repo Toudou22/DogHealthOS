@@ -74,6 +74,33 @@ const PATHOLOGY_CORRELATION: Record<string, { condition: string; riskPct: string
   ]
 };
 
+// Helper to safely load breed image as data URL for PDF report insertion
+async function getBreedImageDataUrl(breedName: string): Promise<string | null> {
+  if (typeof window === 'undefined' || !breedName) return null;
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width || 300;
+        canvas.height = img.naturalHeight || img.height || 300;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0);
+          resolve(canvas.toDataURL('image/png'));
+          return;
+        }
+      } catch {
+        // ignore
+      }
+      resolve(null);
+    };
+    img.onerror = () => resolve(null);
+    img.src = `/dog-images/${encodeURIComponent(breedName.trim())}.8.png`;
+  });
+}
+
 export async function generateLifespanClinicalDossierPDF(data: LifespanDossierData, mode: 'download' | 'print' = 'download'): Promise<void> {
   const {
     breed, age, currentWeight, unit, bcsScore, avgLife, humanLife, stage,
@@ -83,6 +110,7 @@ export async function generateLifespanClinicalDossierPDF(data: LifespanDossierDa
   } = data;
 
   const logoDataUrl = await getBrandLogoDataUrl();
+  const breedImageDataUrl = await getBreedImageDataUrl(breed.name);
 
   // Generate High-Resolution QR Code linking directly to the live breed profile on DogHealthOS
   const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'https://doghealthos.app';
@@ -317,6 +345,29 @@ export async function generateLifespanClinicalDossierPDF(data: LifespanDossierDa
   doc.rect(MARGIN_LEFT, y, CONTENT_WIDTH, bioRows.length * 6.2 + 2, 'F');
   doc.setDrawColor(BORDER_COLOR[0], BORDER_COLOR[1], BORDER_COLOR[2]);
   doc.rect(MARGIN_LEFT, y, CONTENT_WIDTH, bioRows.length * 6.2 + 2, 'S');
+
+  if (breedImageDataUrl) {
+    const photoW = 38;
+    const photoH = 38;
+    const photoX = MARGIN_RIGHT - photoW - 3;
+    const photoY = y + 3;
+
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(photoX - 1, photoY - 1, photoW + 2, photoH + 2, 2, 2, 'F');
+    try {
+      doc.addImage(breedImageDataUrl, 'PNG', photoX, photoY, photoW, photoH, undefined, 'FAST');
+      doc.setDrawColor(ACCENT_COLOR[0], ACCENT_COLOR[1], ACCENT_COLOR[2]);
+      doc.setLineWidth(0.6);
+      doc.roundedRect(photoX, photoY, photoW, photoH, 1.5, 1.5, 'S');
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(5.8);
+      doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
+      doc.text(`${breed.name.toUpperCase()}`, photoX + photoW / 2, photoY + photoH + 3.5, { align: 'center' });
+    } catch (e) {
+      console.warn('Could not add breed image to PDF:', e);
+    }
+  }
 
   let tableRowY = y + 4.8;
   bioRows.forEach(([lbl, val]) => {
