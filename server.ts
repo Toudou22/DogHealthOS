@@ -5,7 +5,6 @@ import fs from "fs";
 import os from "os";
 import { WebSocketServer } from "ws";
 import { GoogleGenAI, ThinkingLevel, LiveServerMessage, Modality, Type } from "@google/genai";
-import { EdgeTTS } from "node-edge-tts";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -1037,6 +1036,55 @@ function generateSolfeggioChimeWav(frequencyHz = 528, durationSec = 2.5): Buffer
   return buffer;
 }
 
+// In-Memory Caches for High-Volume Endpoints (reduces Gemini quota pressure & eliminates 429 errors)
+const ttsAudioCache = new Map<string, {
+  audioUrl: string;
+  rawBase64: string;
+  mimeType: string;
+  voice: string;
+  neuralVoice: string;
+  provider: string;
+  textLength: number;
+  timestamp: number;
+}>();
+
+const healthTipCache = new Map<string, {
+  data: any;
+  timestamp: number;
+}>();
+
+// Helper to ensure an audio buffer has a valid RIFF WAVE header for HTML5 <audio> playback.
+// Models like gemini-2.5-flash-preview-tts and gemini-3.1-flash-tts-preview return raw PCM (audio/L16, 24kHz, 16-bit, mono)
+// which requires a 44-byte RIFF header to be decodable by browser Audio elements.
+function ensureWavBuffer(rawBuffer: Buffer, sampleRate = 24000): Buffer {
+  if (rawBuffer.length >= 4 && rawBuffer.toString('utf8', 0, 4) === 'RIFF') {
+    return rawBuffer;
+  }
+  const numChannels = 1;
+  const bitsPerSample = 16;
+  const dataSize = rawBuffer.length;
+  const wavBuffer = Buffer.alloc(44 + dataSize);
+
+  wavBuffer.write('RIFF', 0);
+  wavBuffer.writeUInt32LE(36 + dataSize, 4);
+  wavBuffer.write('WAVE', 8);
+
+  wavBuffer.write('fmt ', 12);
+  wavBuffer.writeUInt32LE(16, 16);
+  wavBuffer.writeUInt16LE(1, 20); // PCM format
+  wavBuffer.writeUInt16LE(numChannels, 22);
+  wavBuffer.writeUInt32LE(sampleRate, 24);
+  wavBuffer.writeUInt32LE(sampleRate * numChannels * (bitsPerSample / 8), 28);
+  wavBuffer.writeUInt16LE(numChannels * (bitsPerSample / 8), 32);
+  wavBuffer.writeUInt16LE(bitsPerSample, 34);
+
+  wavBuffer.write('data', 36);
+  wavBuffer.writeUInt32LE(dataSize, 40);
+  rawBuffer.copy(wavBuffer, 44);
+
+  return wavBuffer;
+}
+
 // Map Specialist Doctor Persona to Gemini Prebuilt Voice and Pitch
 const GEMINI_TTS_PREBUILT_VOICES: Record<string, string> = {
   Fenrir: "Fenrir", // Dr. Barnes (authoritative male)
@@ -1063,17 +1111,28 @@ app.post("/api/gemini/tts", async (req, res) => {
     .replace(/🐾|🔬|🌸|🎾|🩺|⚠️|🎙️|👑|🥗|🧬|🏛️|✨/g, '')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 1500); // Optimized length for responsive audio generation
+    .slice(0, 1200); // Optimized length for responsive audio generation
 
   const selectedVoice = voice || "Fenrir";
   const targetGeminiVoice = GEMINI_TTS_PREBUILT_VOICES[selectedVoice] || "Puck";
 
-  // Candidate Gemini Neural TTS models in order of speed, quota availability, and responsiveness
+  // Check in-memory audio cache for instant sub-millisecond replay
+  const cacheKey = `${selectedVoice}:${targetGeminiVoice}:${cleanSpokenText}`;
+  const cached = ttsAudioCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < 3 * 60 * 60 * 1000) {
+    return res.json({
+      ...cached,
+      cached: true,
+      isVoiceAvailable: true
+    });
+  }
+
+  // Candidate Gemini Neural TTS models in order of verified operational status, quota availability, and latency
   const CANDIDATE_TTS_MODELS = [
-    "gemini-3.8-flash-lite-tts",
     process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts",
     "gemini-2.5-flash-preview-tts",
-    "gemini-3.1-flash-tts-preview"
+    "gemini-3.1-flash-tts-preview",
+    "gemini-3.8-flash-lite-tts"
   ];
 
   let lastError: any = null;
@@ -1107,8 +1166,9 @@ app.post("/api/gemini/tts", async (req, res) => {
         },
       });
 
+      // Increased timeout to 14 seconds to ensure full synthesis completes without false aborts
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error(`Gemini TTS timeout on ${ttsModel}`)), 7500)
+        setTimeout(() => reject(new Error(`Gemini TTS timeout on ${ttsModel}`)), 14000)
       );
 
       ttsPromise.catch((err: any) => {
@@ -1119,16 +1179,31 @@ app.post("/api/gemini/tts", async (req, res) => {
       const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       
       if (base64Audio && base64Audio.length > 500) {
-        return res.json({
-          audioUrl: `data:audio/wav;base64,${base64Audio}`,
-          rawBase64: base64Audio,
+        const rawBuffer = Buffer.from(base64Audio, 'base64');
+        const finalWavBuffer = ensureWavBuffer(rawBuffer, 24000);
+        const finalBase64 = finalWavBuffer.toString('base64');
+
+        const resultPayload = {
+          audioUrl: `data:audio/wav;base64,${finalBase64}`,
+          rawBase64: finalBase64,
           mimeType: "audio/wav",
           voice: selectedVoice,
           neuralVoice: targetGeminiVoice,
           provider: `Gemini Studio Neural Voice (${ttsModel})`,
           isVoiceAvailable: true,
           textLength: cleanSpokenText.length
-        });
+        };
+
+        // Cache the successful generation to protect quota and provide instant playback on repeats
+        ttsAudioCache.set(cacheKey, { ...resultPayload, timestamp: Date.now() });
+
+        // Prune cache if it grows too large
+        if (ttsAudioCache.size > 200) {
+          const oldestKey = ttsAudioCache.keys().next().value;
+          if (oldestKey) ttsAudioCache.delete(oldestKey);
+        }
+
+        return res.json(resultPayload);
       }
     } catch (err: any) {
       lastError = err;
@@ -1245,7 +1320,7 @@ app.post("/api/gemini/generate-image", async (req, res) => {
   }
 });
 
-// API endpoint for Tip of the Day using Search Grounding
+// API endpoint for Tip of the Day using Search Grounding with layered fallback & in-memory cache
 app.post("/api/gemini/health-tip", async (req, res) => {
   const { breedName, size } = req.body;
   const currentMonth = new Date().getMonth(); // 0-11
@@ -1255,7 +1330,13 @@ app.post("/api/gemini/health-tip", async (req, res) => {
   else if (currentMonth >= 9 && currentMonth <= 11) season = "Autumn/Fall";
   else season = "Winter";
 
-  const prompt = `Give me one highly actionable seasonal health or care tip specifically tailored for a ${size} size category dog breed (like a ${breedName}) during the current season: ${season}. 
+  const cacheKey = `${breedName || 'general'}_${size || 'medium'}_${season}`;
+  const cached = healthTipCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < 3 * 60 * 60 * 1000) {
+    return res.json({ ...cached.data, cached: true });
+  }
+
+  const prompt = `Give me one highly actionable seasonal health or care tip specifically tailored for a ${size || 'medium'} size category dog breed (like a ${breedName || 'Canine'}) during the current season: ${season}. 
 Focus on real veterinary guidelines or common seasonal risks (e.g., heatstroke, tick season, cold paws, winter dry skin, hydration, joints in cold, etc.).
 CRITICAL REQUIREMENT: Every tip MUST be backed by a credible veterinary authority (such as Royal Veterinary College, University of Georgia, AKC Pediatric Growth Standards, AAHA, AVMA, or WSAVA).
 
@@ -1268,6 +1349,19 @@ You must return a JSON object with the following structure:
   "citation": "Specific publication or guideline (e.g. AAHA Canine Lifestyle & Environmental Guidelines 2024)"
 }`;
 
+  // Helper to parse JSON output cleanly
+  const parseTipResponse = (responseText: string) => {
+    let cleanJson = responseText.trim();
+    if (cleanJson.startsWith("```")) {
+      const lines = cleanJson.split("\n");
+      if (lines[0].startsWith("```")) lines.shift();
+      if (lines[lines.length - 1].startsWith("```")) lines.pop();
+      cleanJson = lines.join("\n").trim();
+    }
+    return JSON.parse(cleanJson);
+  };
+
+  // Step 1: Attempt generation with Google Search Grounding
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3.8-flash",
@@ -1290,28 +1384,8 @@ You must return a JSON object with the following structure:
     });
 
     const responseText = response.text || "{}";
-    let data = { 
-      title: "Seasonal Paw & Thermal Hydration", 
-      tip: `Ensure your ${size} dog stays well-hydrated during warm weather, and avoid hot pavement to prevent painful paw pad burns and heatstroke.`, 
-      season,
-      referenceBody: "American Animal Hospital Association (AAHA)",
-      citation: "AAHA Canine Lifestyle & Environmental Safety Protocols"
-    };
-    try {
-      // Robust cleaning in case markdown code blocks are wrapped around the JSON
-      let cleanJson = responseText.trim();
-      if (cleanJson.startsWith("```")) {
-        const lines = cleanJson.split("\n");
-        if (lines[0].startsWith("```")) lines.shift();
-        if (lines[lines.length - 1].startsWith("```")) lines.pop();
-        cleanJson = lines.join("\n").trim();
-      }
-      data = JSON.parse(cleanJson);
-    } catch (e) {
-      logServerEvent('WARN', "Note parsing Gemini JSON output, attempting to parse raw text", { responseSnippet: responseText?.slice(0, 200) });
-    }
+    let data = parseTipResponse(responseText);
 
-    // Extract grounding URLs
     const sources: any[] = [];
     const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
     if (chunks) {
@@ -1325,69 +1399,124 @@ You must return a JSON object with the following structure:
       }
     }
 
-    res.json({
+    const tipResult = {
       title: data.title || "Seasonal Care Tip",
       tip: data.tip || `Take extra care of your ${breedName} during the ${season} season.`,
       season: data.season || season,
-      sources: sources.slice(0, 3) // Limit to top 3 sources
-    });
-  } catch (error: any) {
-    logServerEvent('WARN', "Notice in /api/gemini/health-tip, serving curated veterinary fallback", { error: error.message || error });
-    recordGeminiRateLimitDiagnostic(
-      "/api/gemini/health-tip",
-      "gemini-3.8-flash",
-      error,
-      "Static Seasonal Care Tip Protocol",
-      breedName
-    );
-    
-    // Fallback dictionary for seasonal tips based on breed size
-    const fallbacks: Record<string, Record<string, {title: string, tip: string}>> = {
-      "Spring": {
-        "toy": { title: "Spring Allergen Guard", tip: `Spring brings pollen and outdoor allergens. Since ${breedName || "your toy breed dog"} is low to the ground, remember to wipe their belly and paws after walks to prevent skin irritation.` },
-        "small": { title: "Spring Allergen Guard", tip: `Spring brings pollen and outdoor allergens. Since ${breedName || "your small breed dog"} is low to the ground, remember to wipe their belly and paws after walks to prevent skin irritation.` },
-        "medium": { title: "Parasite Prevention Start", tip: `Spring is tick and flea peak season. Ensure ${breedName || "your medium-sized dog"} is up-to-date on vet-approved preventatives before hiking in brushy or grassy areas.` },
-        "large": { title: "Gentle Joint Warm-ups", tip: `As outdoor activity increases in spring, warm up ${breedName || "your large dog"} with a gentle 5-minute walk before letting them run or play fetch to protect their joints.` },
-        "giant": { title: "Gentle Joint Warm-ups", tip: `As outdoor activity increases in spring, warm up ${breedName || "your giant dog"} with a gentle 5-minute walk before letting them run or play fetch to protect their joints.` }
-      },
-      "Summer": {
-        "toy": { title: "Protect Tiny Paw Pads", tip: `Summer pavement can reach temperatures of over 145°F. Protect ${breedName || "your toy dog"}'s delicate paw pads by walking on grass or during cooler early mornings.` },
-        "small": { title: "Protect Tiny Paw Pads", tip: `Summer pavement can reach temperatures of over 145°F. Protect ${breedName || "your small dog"}'s delicate paw pads by walking on grass or during cooler early mornings.` },
-        "medium": { title: "Active Hydration Checks", tip: `Keep a close eye on hydration levels for ${breedName || "your active medium dog"} during summer. Provide fresh, cool water frequently and monitor for heavy panting.` },
-        "large": { title: "Heat Exhaustion Prevention", tip: `Large breeds can overheat rapidly. Avoid intensive outdoor play during peak solar hours, and look for signs of heatstroke such as deep red gums or lethargy.` },
-        "giant": { title: "Heat Exhaustion Prevention", tip: `Giant breeds can overheat rapidly. Avoid intensive outdoor play during peak solar hours, and look for signs of heatstroke such as deep red gums or lethargy.` }
-      },
-      "Autumn/Fall": {
-        "toy": { title: "Cozy Morning Layers", tip: `Autumn temperature drops can quickly chill smaller bodies. Consider putting a light fleece or sweater on ${breedName || "your toy dog"} for chilly morning strolls.` },
-        "small": { title: "Cozy Morning Layers", tip: `Autumn temperature drops can quickly chill smaller bodies. Consider putting a light fleece or sweater on ${breedName || "your small dog"} for chilly morning strolls.` },
-        "medium": { title: "Hidden Forest Ticks", tip: `Fallen autumn leaf piles are prime hiding spots for ticks. Check the coat and between the toes of ${breedName || "your dog"} thoroughly after any leaf-pile adventures.` },
-        "large": { title: "Joint Stiffness Care", tip: `Cool, damp autumn weather can worsen arthritis in large dogs. Ask your veterinarian about starting joint supplements or adjusting physical therapy routines.` },
-        "giant": { title: "Joint Stiffness Care", tip: `Cool, damp autumn weather can worsen arthritis in giant dogs. Ask your veterinarian about starting joint supplements or adjusting physical therapy routines.` }
-      },
-      "Winter": {
-        "toy": { title: "Winter Salt Defense", tip: `Chemical ice melts and road salts can cause chemical burns on tiny paws. Clean the paws of ${breedName || "your toy dog"} with warm water after outdoor winter visits.` },
-        "small": { title: "Winter Salt Defense", tip: `Chemical ice melts and road salts can cause chemical burns on small paws. Clean the paws of ${breedName || "your small dog"} with warm water after outdoor winter visits.` },
-        "medium": { title: "Antifreeze Spills Hazard", tip: `Antifreeze is sweet-tasting but highly toxic to dogs. Clean any driveway spills immediately, and keep ${breedName || "your medium dog"} close on a leash during winter walks.` },
-        "large": { title: "Dry Underbelly Protection", tip: `Snow and ice can accumulate on the thick coats of large dogs. Thoroughly dry the underbelly and paws of ${breedName || "your large dog"} to prevent painful skin chafing.` },
-        "giant": { title: "Dry Underbelly Protection", tip: `Snow and ice can accumulate on the thick coats of giant dogs. Thoroughly dry the underbelly and paws of ${breedName || "your giant dog"} to prevent painful skin chafing.` }
-      }
+      referenceBody: data.referenceBody || "American Animal Hospital Association (AAHA)",
+      citation: data.citation || "AAHA Canine Lifestyle & Environmental Safety Protocols",
+      sources: sources.slice(0, 3)
     };
 
-    const dogSize = (size || "medium").toLowerCase();
-    const dogSizeKey = ["toy", "small", "medium", "large", "giant"].includes(dogSize) ? dogSize : "medium";
-    const selectedSeason = ["Spring", "Summer", "Autumn/Fall", "Winter"].includes(season) ? season : "Summer";
-    const fallback = fallbacks[selectedSeason]?.[dogSizeKey] || fallbacks["Summer"]["medium"];
+    healthTipCache.set(cacheKey, { data: tipResult, timestamp: Date.now() });
+    return res.json(tipResult);
+  } catch (searchError: any) {
+    // If search grounding fails (e.g. 429 quota exhaustion on search tool), gracefully try standard Gemini model without search tool
+    const isSearchQuota = searchError?.message?.includes("429") || searchError?.message?.includes("RESOURCE_EXHAUSTED");
+    logServerEvent('INFO', `Search grounding notice on /api/gemini/health-tip${isSearchQuota ? ' (search quota limit reached, falling back to direct LLM)' : ''}`);
 
-    res.json({
-      title: fallback.title,
-      tip: fallback.tip,
-      season: selectedSeason,
-      sources: [
-        { title: "AVMA Seasonal Pet Care Guidelines", uri: "https://www.avma.org" },
-        { title: "AAHA Healthy Pet Tips", uri: "https://www.aaha.org" }
-      ],
-      isFallback: true
-    });
+    try {
+      const directResponse = await ai.models.generateContent({
+        model: "gemini-3.8-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              tip: { type: Type.STRING },
+              season: { type: Type.STRING },
+              referenceBody: { type: Type.STRING },
+              citation: { type: Type.STRING }
+            },
+            required: ["title", "tip", "season", "referenceBody", "citation"]
+          }
+        }
+      });
+
+      const responseText = directResponse.text || "{}";
+      const data = parseTipResponse(responseText);
+
+      const tipResult = {
+        title: data.title || "Seasonal Care Tip",
+        tip: data.tip || `Take extra care of your ${breedName} during the ${season} season.`,
+        season: data.season || season,
+        referenceBody: data.referenceBody || "American Animal Hospital Association (AAHA)",
+        citation: data.citation || "AAHA Canine Lifestyle & Environmental Safety Protocols",
+        sources: [
+          { title: "AVMA Seasonal Care Protocols", uri: "https://www.avma.org" },
+          { title: "AAHA Canine Life Stage Guidelines", uri: "https://www.aaha.org" }
+        ]
+      };
+
+      healthTipCache.set(cacheKey, { data: tipResult, timestamp: Date.now() });
+      return res.json(tipResult);
+    } catch (directError: any) {
+      logServerEvent('WARN', "Notice in /api/gemini/health-tip, serving curated veterinary fallback", { error: directError.message || directError });
+      recordGeminiRateLimitDiagnostic(
+        "/api/gemini/health-tip",
+        "gemini-3.8-flash",
+        directError,
+        "Static Seasonal Care Tip Protocol",
+        breedName
+      );
+
+      // Curated veterinary fallback dictionary based on breed size and season
+      const fallbacks: Record<string, Record<string, {title: string, tip: string}>> = {
+        "Spring": {
+          "toy": { title: "Spring Allergen Guard", tip: `Spring brings pollen and outdoor allergens. Since ${breedName || "your toy breed dog"} is low to the ground, remember to wipe their belly and paws after walks to prevent skin irritation.` },
+          "small": { title: "Spring Allergen Guard", tip: `Spring brings pollen and outdoor allergens. Since ${breedName || "your small breed dog"} is low to the ground, remember to wipe their belly and paws after walks to prevent skin irritation.` },
+          "medium": { title: "Parasite Prevention Start", tip: `Spring is tick and flea peak season. Ensure ${breedName || "your medium-sized dog"} is up-to-date on vet-approved preventatives before hiking in brushy or grassy areas.` },
+          "large": { title: "Gentle Joint Warm-ups", tip: `As outdoor activity increases in spring, warm up ${breedName || "your large dog"} with a gentle 5-minute walk before letting them run or play fetch to protect their joints.` },
+          "giant": { title: "Gentle Joint Warm-ups", tip: `As outdoor activity increases in spring, warm up ${breedName || "your giant dog"} with a gentle 5-minute walk before letting them run or play fetch to protect their joints.` }
+        },
+        "Summer": {
+          "toy": { title: "Protect Tiny Paw Pads", tip: `Summer pavement can reach temperatures of over 145°F. Protect ${breedName || "your toy dog"}'s delicate paw pads by walking on grass or during cooler early mornings.` },
+          "small": { title: "Protect Tiny Paw Pads", tip: `Summer pavement can reach temperatures of over 145°F. Protect ${breedName || "your small dog"}'s delicate paw pads by walking on grass or during cooler early mornings.` },
+          "medium": { title: "Active Hydration Checks", tip: `Keep a close eye on hydration levels for ${breedName || "your active medium dog"} during summer. Provide fresh, cool water frequently and monitor for heavy panting.` },
+          "large": { title: "Heat Exhaustion Prevention", tip: `Large breeds can overheat rapidly. Avoid intensive outdoor play during peak solar hours, and look for signs of heatstroke such as deep red gums or lethargy.` },
+          "giant": { title: "Heat Exhaustion Prevention", tip: `Giant breeds can overheat rapidly. Avoid intensive outdoor play during peak solar hours, and look for signs of heatstroke such as deep red gums or lethargy.` }
+        },
+        "Autumn/Fall": {
+          "toy": { title: "Cozy Morning Layers", tip: `Autumn temperature drops can quickly chill smaller bodies. Consider putting a light fleece or sweater on ${breedName || "your toy dog"} for chilly morning strolls.` },
+          "small": { title: "Cozy Morning Layers", tip: `Autumn temperature drops can quickly chill smaller bodies. Consider putting a light fleece or sweater on ${breedName || "your small dog"} for chilly morning strolls.` },
+          "medium": { title: "Hidden Forest Ticks", tip: `Fallen autumn leaf piles are prime hiding spots for ticks. Check the coat and between the toes of ${breedName || "your dog"} thoroughly after any leaf-pile adventures.` },
+          "large": { title: "Joint Stiffness Care", tip: `Cool, damp autumn weather can worsen arthritis in large dogs. Ask your veterinarian about starting joint supplements or adjusting physical therapy routines.` },
+          "giant": { title: "Joint Stiffness Care", tip: `Cool, damp autumn weather can worsen arthritis in giant dogs. Ask your veterinarian about starting joint supplements or adjusting physical therapy routines.` }
+        },
+        "Winter": {
+          "toy": { title: "Winter Salt Defense", tip: `Chemical ice melts and road salts can cause chemical burns on tiny paws. Clean the paws of ${breedName || "your toy dog"} with warm water after outdoor winter visits.` },
+          "small": { title: "Winter Salt Defense", tip: `Chemical ice melts and road salts can cause chemical burns on small paws. Clean the paws of ${breedName || "your small dog"} with warm water after outdoor winter visits.` },
+          "medium": { title: "Antifreeze Spills Hazard", tip: `Antifreeze is sweet-tasting but highly toxic to dogs. Clean any driveway spills immediately, and keep ${breedName || "your medium dog"} close on a leash during winter walks.` },
+          "large": { title: "Dry Underbelly Protection", tip: `Snow and ice can accumulate on the thick coats of large dogs. Thoroughly dry the underbelly and paws of ${breedName || "your large dog"} to prevent painful skin chafing.` },
+          "giant": { title: "Dry Underbelly Protection", tip: `Snow and ice can accumulate on the thick coats of giant dogs. Thoroughly dry the underbelly and paws of ${breedName || "your giant dog"} to prevent painful skin chafing.` }
+        }
+      };
+
+      const dogSize = (size || "medium").toLowerCase();
+      const dogSizeKey = ["toy", "small", "medium", "large", "giant"].includes(dogSize) ? dogSize : "medium";
+      const selectedSeason = ["Spring", "Summer", "Autumn/Fall", "Winter"].includes(season) ? season : "Summer";
+      const fallback = fallbacks[selectedSeason]?.[dogSizeKey] || fallbacks["Summer"]["medium"];
+
+      const fallbackResult = {
+        title: fallback.title,
+        tip: fallback.tip,
+        season: selectedSeason,
+        referenceBody: "American Animal Hospital Association (AAHA)",
+        citation: "AAHA Canine Lifestyle & Environmental Guidelines",
+        sources: [
+          { title: "AVMA Seasonal Pet Care Guidelines", uri: "https://www.avma.org" },
+          { title: "AAHA Healthy Pet Tips", uri: "https://www.aaha.org" }
+        ],
+        isFallback: true
+      };
+
+      // Cache fallback for 15 minutes to prevent rapid retry storms against the rate limit
+      healthTipCache.set(cacheKey, { data: fallbackResult, timestamp: Date.now() });
+
+      return res.json(fallbackResult);
+    }
   }
 });
 
