@@ -188,10 +188,10 @@ export async function generateAudioPassport(
   const persona = NEURAL_STUDIO_VOICES.find(v => v.id === voice);
   const resolvedNeuralVoice = neuralVoice || persona?.neuralCode || 'en-US-ChristopherNeural';
 
-  // Attempt server-side Flagship Neural TTS with a 15s timeout
+  // Attempt server-side Flagship Neural TTS with a generous 30s timeout
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     const response = await fetch('/api/gemini/tts', {
       method: 'POST',
@@ -224,11 +224,15 @@ export async function generateAudioPassport(
         };
       }
       
+      console.warn('[Audio Generation Notice]:', data.error || 'Server reported voice unavailable');
       throw new Error(data.error || 'Voice not available at the moment');
     } else {
+      const errText = await response.text().catch(() => '');
+      console.warn(`[Audio Generation HTTP ${response.status}]:`, errText);
       throw new Error('Voice not available at the moment');
     }
   } catch (err: any) {
+    console.warn('[Audio Passport Generation Error]:', err?.message || err);
     throw new Error(err?.message || 'Voice not available at the moment');
   }
 }
@@ -335,17 +339,25 @@ export async function playSpokenAudio(options: PlayAudioOptions): Promise<void> 
         onEnd?.();
       };
 
-      audio.onerror = () => {
+      audio.onerror = (e) => {
         currentAudio = null;
+        console.warn('[Audio Player Element Error]:', e);
         onError?.(new Error("Voice not available at the moment"));
       };
 
-      await audio.play();
+      try {
+        await audio.play();
+      } catch (playErr: any) {
+        currentAudio = null;
+        console.warn('[Audio Play Promise Error]:', playErr?.message || playErr);
+        onError?.(new Error("Voice not available at the moment"));
+      }
     } else {
       throw new Error("Voice not available at the moment");
     }
   } catch (err: any) {
     currentAudio = null;
+    console.warn('[Spoken Audio Engine Error]:', err?.message || err);
     onError?.(new Error("Voice not available at the moment"));
   }
 }

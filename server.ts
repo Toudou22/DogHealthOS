@@ -1068,12 +1068,12 @@ app.post("/api/gemini/tts", async (req, res) => {
   const selectedVoice = voice || "Fenrir";
   const targetGeminiVoice = GEMINI_TTS_PREBUILT_VOICES[selectedVoice] || "Puck";
 
-  // Candidate Gemini Neural TTS models in order of quota availability and responsiveness
+  // Candidate Gemini Neural TTS models in order of speed, quota availability, and responsiveness
   const CANDIDATE_TTS_MODELS = [
-    "gemini-2.5-flash-preview-tts",
-    "gemini-3.1-flash-tts-preview",
     "gemini-3.8-flash-lite-tts",
-    process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts"
+    process.env.GEMINI_TTS_MODEL || "gemini-3.8-flash-tts",
+    "gemini-2.5-flash-preview-tts",
+    "gemini-3.1-flash-tts-preview"
   ];
 
   let lastError: any = null;
@@ -1108,7 +1108,7 @@ app.post("/api/gemini/tts", async (req, res) => {
       });
 
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error(`Gemini TTS timeout on ${ttsModel}`)), 12000)
+        setTimeout(() => reject(new Error(`Gemini TTS timeout on ${ttsModel}`)), 7500)
       );
 
       ttsPromise.catch((err: any) => {
