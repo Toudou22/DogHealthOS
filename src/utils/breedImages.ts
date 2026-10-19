@@ -10,6 +10,8 @@
 
 export function getBreedImagePath(breedName: string): string | null {
   if (!breedName) return null;
-  return `/dog-images/${encodeURIComponent(breedName.trim())}.8.png`;
+  // Replace slashes with dashes to ensure clean URL resolution for breeds like Rough/Smooth Collie
+  const cleanName = breedName.trim().replace(/\//g, '-');
+  return `/dog-images/${encodeURIComponent(cleanName)}.8.png`;
 }
 

@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
 import { Breed } from '../types';
 import { getBrandLogoDataUrl } from './brandLogo';
+import { getBreedImagePath } from './breedImages';
 import { getCanineCognitiveArchetype, getAgeCalibratedActivityPlan, getDaycareCompatibilityProfile } from './caninePsychologyData';
 
 export interface LifespanDossierData {
@@ -74,13 +75,27 @@ const PATHOLOGY_CORRELATION: Record<string, { condition: string; riskPct: string
   ]
 };
 
-// Helper to safely load breed image as data URL for PDF report insertion
+// Helper to safely load breed image as data URL for PDF report insertion with failsafe timeout
 async function getBreedImageDataUrl(breedName: string): Promise<string | null> {
   if (typeof window === 'undefined' || !breedName) return null;
+  const imagePath = getBreedImagePath(breedName);
+  if (!imagePath) return null;
+
   return new Promise((resolve) => {
+    let resolved = false;
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        resolve(null);
+      }
+    }, 2800); // 2.8s safety timeout so PDF generation NEVER hangs
+
     const img = new Image();
     img.crossOrigin = 'Anonymous';
     img.onload = () => {
+      if (resolved) return;
+      clearTimeout(timeout);
+      resolved = true;
       try {
         const canvas = document.createElement('canvas');
         canvas.width = img.naturalWidth || img.width || 300;
@@ -91,13 +106,18 @@ async function getBreedImageDataUrl(breedName: string): Promise<string | null> {
           resolve(canvas.toDataURL('image/png'));
           return;
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        console.warn('Canvas conversion error for breed image:', err);
       }
       resolve(null);
     };
-    img.onerror = () => resolve(null);
-    img.src = `/dog-images/${encodeURIComponent(breedName.trim())}.8.png`;
+    img.onerror = () => {
+      if (resolved) return;
+      clearTimeout(timeout);
+      resolved = true;
+      resolve(null);
+    };
+    img.src = imagePath;
   });
 }
 
