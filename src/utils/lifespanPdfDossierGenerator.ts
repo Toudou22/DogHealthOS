@@ -290,24 +290,43 @@ export async function generateLifespanClinicalDossierPDF(data: LifespanDossierDa
       console.warn('Could not render logo in PDF:', e);
     }
 
-    const textX = MARGIN_LEFT + 58;
+    const textX = MARGIN_LEFT + 56;
 
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(12.5);
-    doc.text("CANINE HEALTH & LONGEVITY MASTER CLINICAL DOSSIER", textX, 15);
+    doc.setFontSize(11.5);
+    doc.text("CANINE HEALTH & LONGEVITY MASTER CLINICAL DOSSIER", textX, 14);
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
+    doc.setFontSize(7.5);
     doc.setTextColor(226, 232, 240);
-    doc.text(`Official Document Issued: ${formattedTimestamp} | Subject: ${data.petName ? `${data.petName} (${breed.name})` : breed.name}`, textX, 23);
-    doc.text("DogHealthOS™ Institutional Preventative Care & Longitudinal Trajectory Analysis", textX, 29);
-    doc.text("Certified AAHA / WSAVA / NRC Standards • RVC VetCompass™ Validated", textX, 35);
-    doc.text(`SECURITY: ENTERPRISE AUDITED  |  DOSSIER ID: DOS-${dossierId}  |  ACTIVE`, textX, 40);
+    doc.text(`Official Document Issued: ${formattedTimestamp}`, textX, 21);
+    doc.text(`Subject: ${data.petName ? `${data.petName} (${breed.name})` : breed.name}`, textX, 26);
+    doc.text("DogHealthOS™ Institutional Preventative Care & Trajectory Analysis", textX, 31);
+    doc.text(`SECURITY: ENTERPRISE AUDITED | DOSSIER ID: DOS-${dossierId} | ACTIVE`, textX, 36);
+
+    // Render High-Resolution Breed Photo Badge in Executive Header (Top Right)
+    if (breedImageDataUrl) {
+      const photoW = 31;
+      const photoH = 31;
+      const photoX = MARGIN_RIGHT - photoW; // 196 - 31 = 165mm (Flush against right margin)
+      const photoY = 6.5; // Pushed up into top banner
+
+      doc.setFillColor(255, 255, 255);
+      doc.roundedRect(photoX, photoY, photoW, photoH, 2, 2, 'F');
+      try {
+        doc.addImage(breedImageDataUrl, 'PNG', photoX + 1, photoY + 1, photoW - 2, photoH - 2, undefined, 'FAST');
+        doc.setDrawColor(ACCENT_COLOR[0], ACCENT_COLOR[1], ACCENT_COLOR[2]);
+        doc.setLineWidth(0.6);
+        doc.roundedRect(photoX, photoY, photoW, photoH, 2, 2, 'S');
+      } catch (e) {
+        console.warn('Could not add breed image to PDF header:', e);
+      }
+    }
   } else {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(15);
+    doc.setFontSize(14);
     doc.text("CANINE HEALTH & LONGEVITY MASTER CLINICAL DOSSIER", MARGIN_LEFT, 15);
 
     doc.setFont("helvetica", "normal");
@@ -345,29 +364,6 @@ export async function generateLifespanClinicalDossierPDF(data: LifespanDossierDa
   doc.rect(MARGIN_LEFT, y, CONTENT_WIDTH, bioRows.length * 6.2 + 2, 'F');
   doc.setDrawColor(BORDER_COLOR[0], BORDER_COLOR[1], BORDER_COLOR[2]);
   doc.rect(MARGIN_LEFT, y, CONTENT_WIDTH, bioRows.length * 6.2 + 2, 'S');
-
-  if (breedImageDataUrl) {
-    const photoW = 38;
-    const photoH = 38;
-    const photoX = MARGIN_RIGHT - photoW - 3;
-    const photoY = y + 3;
-
-    doc.setFillColor(255, 255, 255);
-    doc.roundedRect(photoX - 1, photoY - 1, photoW + 2, photoH + 2, 2, 2, 'F');
-    try {
-      doc.addImage(breedImageDataUrl, 'PNG', photoX, photoY, photoW, photoH, undefined, 'FAST');
-      doc.setDrawColor(ACCENT_COLOR[0], ACCENT_COLOR[1], ACCENT_COLOR[2]);
-      doc.setLineWidth(0.6);
-      doc.roundedRect(photoX, photoY, photoW, photoH, 1.5, 1.5, 'S');
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(5.8);
-      doc.setTextColor(TEXT_MUTED[0], TEXT_MUTED[1], TEXT_MUTED[2]);
-      doc.text(`${breed.name.toUpperCase()}`, photoX + photoW / 2, photoY + photoH + 3.5, { align: 'center' });
-    } catch (e) {
-      console.warn('Could not add breed image to PDF:', e);
-    }
-  }
 
   let tableRowY = y + 4.8;
   bioRows.forEach(([lbl, val]) => {
