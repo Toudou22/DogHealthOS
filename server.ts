@@ -1053,6 +1053,11 @@ const healthTipCache = new Map<string, {
   timestamp: number;
 }>();
 
+const riskFactorsCache = new Map<string, {
+  data: any;
+  timestamp: number;
+}>();
+
 // Helper to ensure an audio buffer has a valid RIFF WAVE header for HTML5 <audio> playback.
 // Models like gemini-2.5-flash-preview-tts and gemini-3.1-flash-tts-preview return raw PCM (audio/L16, 24kHz, 16-bit, mono)
 // which requires a 44-byte RIFF header to be decodable by browser Audio elements.
@@ -1517,6 +1522,362 @@ You must return a JSON object with the following structure:
 
       return res.json(fallbackResult);
     }
+  }
+});
+
+// Helper to provide comprehensive veterinary curated fallback data for breed risk factors
+function getCuratedRiskFactorsFallback(breedName: string, size: string) {
+  const lower = breedName.toLowerCase();
+  
+  if (lower.includes("french") || lower.includes("bulldog") || lower.includes("pug") || lower.includes("boston")) {
+    return [
+      {
+        id: "boas_syndrome",
+        condition: "Brachycephalic Obstructive Airway Syndrome (BOAS)",
+        category: "Genetic & Environmental",
+        severity: "Critical",
+        impactDescription: "Stenotic nares, elongated soft palate, and hypoplastic trachea severely restrict upper airway dynamics and compromise heat dissipation.",
+        environmentalTriggers: "Ambient heat >75°F (24°C), high humidity, unpaced sprint exercise, and tight neck collars.",
+        preventativeAction: "Use padded step-in body harnesses exclusively, maintain strict lean body score (BCS 4/5), and seek veterinary airway assessment before 18 months.",
+        citation: "Royal Veterinary College (RVC) Brachycephalic Cohort & Cambridge BOAS Scheme"
+      },
+      {
+        id: "ivdd_spinal",
+        condition: "Intervertebral Disc Disease (IVDD) & Spinal Stenosis",
+        category: "Genetic & Environmental",
+        severity: "High",
+        impactDescription: "Chondrodystrophic disc calcification predisposes to acute Hansen Type I disc extrusion, spinal compression, and limb paresis.",
+        environmentalTriggers: "Jumping off high furniture, navigating steep stairs, and twisting collisions during rough play.",
+        preventativeAction: "Install furniture ramps, block steep staircases, and consult veterinary neurology immediately upon sudden back stiffness or arched posture.",
+        citation: "UC Davis Veterinary Genetics & ACVIM Neurology Specialty Consensus"
+      },
+      {
+        id: "acute_hyperthermia",
+        condition: "Acute Exertional Hyperthermia & Heatstroke",
+        category: "Environmental",
+        severity: "Critical",
+        impactDescription: "Limited evaporative respiratory cooling causes rapid core temperature escalation exceeding 106°F, leading to cellular organ damage.",
+        environmentalTriggers: "Hot weather exercise, enclosed vehicles, hot asphalt radiant heat, and high excitement.",
+        preventativeAction: "Restrict walks to cool mornings and evenings, provide continuous fresh water, never leave unattended in cars, and use evaporative cooling vests.",
+        citation: "AVMA Emergency Hyperthermia Protocol & AAHA Critical Care Protocols"
+      },
+      {
+        id: "fold_pyoderma",
+        condition: "Skin Fold Pyoderma & Environmental Atopy",
+        category: "Genetic & Environmental",
+        severity: "Moderate",
+        impactDescription: "Deep facial wrinkles and tail pockets trap sebum, moisture, and yeast, resulting in recurrent painful intertrigo infections.",
+        environmentalTriggers: "Summer humidity, wet face after drinking, and high seasonal airborne pollen levels.",
+        preventativeAction: "Daily antiseptic wipe cleaning of facial folds and tail pocket with chlorhexidine/ketoconazole wipes; high-potency marine omega-3 fatty acids.",
+        citation: "World Congress of Veterinary Dermatology (WCVD) Guidelines"
+      }
+    ];
+  }
+
+  if (lower.includes("german") || lower.includes("shepherd") || lower.includes("malinois") || lower.includes("alsatian")) {
+    return [
+      {
+        id: "gdv_bloat",
+        condition: "Gastric Dilatation-Volvulus (GDV / Acute Bloat)",
+        category: "Genetic & Environmental",
+        severity: "Critical",
+        impactDescription: "Deep, narrow chest geometry allows the stomach to distend with gas and twist on its mesenteric axis, occluding caudal venous return and causing rapid shock.",
+        environmentalTriggers: "Single large daily feeding, eating rapidly, elevated food stands, and heavy running within 90 minutes post-feeding.",
+        preventativeAction: "Consider prophylactic laparoscopic gastropexy, feed 2-3 smaller meals daily using slow-feeder bowls, and enforce calm rest before and after meals.",
+        citation: "Purdue University GDV Risk Model & American College of Veterinary Surgeons (ACVS)"
+      },
+      {
+        id: "hip_elbow_dysplasia",
+        condition: "Coxofemoral Hip Dysplasia & Degenerative Joint Disease",
+        category: "Genetic & Environmental",
+        severity: "High",
+        impactDescription: "Polygenic incongruity of the femoral head and acetabulum causes progressive cartilage erosion, osteophytes, joint effusion, and chronic lameness.",
+        environmentalTriggers: "Rapid adolescent growth spurts, early high-impact concussive jumping, and slippery hardwood/tile floors without traction.",
+        preventativeAction: "OFA/PennHIP parental screening, large-breed puppy formula with controlled calcium-to-phosphorus ratio, and early joint supplementation.",
+        citation: "Orthopedic Foundation for Animals (OFA) & University of Georgia VMDB Cohort"
+      },
+      {
+        id: "degenerative_myelopathy",
+        condition: "Degenerative Myelopathy (SOD1 Genetic Mutation)",
+        category: "Genetic",
+        severity: "High",
+        impactDescription: "Progressive neurodegenerative axonopathy of the spinal cord (canine ALS analogue) manifesting in mature years with hindlimb ataxia and loss of proprioception.",
+        environmentalTriggers: "Lack of physical rehabilitation, muscle wasting, and prolonged sedentary immobility on hard surfaces.",
+        preventativeAction: "DNA genetic test for the SOD1 gene mutation; early hydrotherapy, targeted physical therapy, and traction-boot mobility support.",
+        citation: "University of Missouri Veterinary Genetics Laboratory & AKC Canine Health Foundation"
+      },
+      {
+        id: "exocrine_pancreatic_insufficiency",
+        condition: "Exocrine Pancreatic Insufficiency (EPI)",
+        category: "Genetic",
+        severity: "Moderate",
+        impactDescription: "Autoimmune acinar atrophy of the pancreas resulting in failure to produce digestive enzymes, causing ravenous hunger, severe weight loss, and poor nutrient uptake.",
+        environmentalTriggers: "Sudden high-fat dietary shifts and indigestible low-grade protein fillers.",
+        preventativeAction: "Serum TLI (Trypsin-Like Immunoreactivity) screening, porcine pancreatic enzyme powder supplementation, and Vitamin B12 monitoring.",
+        citation: "Texas A&M University (TAMU) Gastrointestinal Laboratory"
+      }
+    ];
+  }
+
+  if (lower.includes("golden") || lower.includes("retriever") || lower.includes("labrador")) {
+    return [
+      {
+        id: "oncological_predisposition",
+        condition: "Oncological Predisposition (Hemangiosarcoma & Lymphoma)",
+        category: "Genetic & Environmental",
+        severity: "Critical",
+        impactDescription: "Heritable genetic polymorphisms lead to elevated lifetime cancer rates, particularly splenic hemangiosarcoma and multicentric lymphoma.",
+        environmentalTriggers: "Lawn chemical/herbicide exposure, secondhand smoke, obesity, and premature pediatric neutering before physical skeletal maturity.",
+        preventativeAction: "Routine semi-annual abdominal ultrasounds and spleen checks starting at age 6; maintain lean Body Condition Score (BCS 4-5).",
+        citation: "Morris Animal Foundation Golden Retriever Lifetime Study & UC Davis Oncology"
+      },
+      {
+        id: "hip_elbow_dysplasia_retriever",
+        condition: "Hip & Elbow Dysplasia with Secondary Osteoarthritis",
+        category: "Genetic & Environmental",
+        severity: "High",
+        impactDescription: "Developmental joint laxity causes abnormal focal mechanical stress, articular cartilage microfractures, osteophyte formation, and joint stiffness.",
+        environmentalTriggers: "Puppyhood overfeeding leading to excessive skeletal weight load, running on concrete, and repetitive ball-launch twisting.",
+        preventativeAction: "OFA hip/elbow clearance, measured feeding to maintain athletic lean physique (adds up to 1.8 median years of life), and swimming cross-training.",
+        citation: "Purina Lifelong Longevity Study & Orthopedic Foundation for Animals (OFA)"
+      },
+      {
+        id: "eic_pomc_metabolic",
+        condition: "Metabolic Hyperphagia & Exercise-Induced Collapse (EIC/POMC)",
+        category: "Genetic & Environmental",
+        severity: "High",
+        impactDescription: "POMC gene mutations impair satiety signaling while DNM1 mutations can impair synaptic vesicle recycling during heavy excitement and exertion.",
+        environmentalTriggers: "Free-choice feeding, generous table treats, intense ball-fetching in warm weather, and lack of exercise pacing.",
+        preventativeAction: "Weigh daily food rations on a kitchen scale, perform DNA screening for EIC, and immediately halt exercise if unsteady rocking gait is observed.",
+        citation: "University of Cambridge (Cell Metabolism 2016) & University of Minnesota EIC Registry"
+      },
+      {
+        id: "atopic_dermatitis_otitis",
+        condition: "Allergic Atopic Dermatitis & Chronic Otitis Externa",
+        category: "Genetic & Environmental",
+        severity: "Moderate",
+        impactDescription: "Impaired cutaneous lipid barrier and pendulous ear conformation create an ideal environment for secondary bacterial and Malassezia yeast proliferation.",
+        environmentalTriggers: "Swimming in lakes without ear drying, high seasonal pollen levels, and dietary protein hypersensitivities.",
+        preventativeAction: "Apply drying veterinary ear cleansers containing Tris-EDTA post-swimming, and supplement daily with marine EPA/DHA omega-3 fatty acids.",
+        citation: "World Small Animal Veterinary Association (WSAVA) Dermatological Guidelines"
+      }
+    ];
+  }
+
+  // Size-based defaults
+  const normSize = (size || "medium").toLowerCase();
+  if (normSize === "giant" || normSize === "large") {
+    return [
+      {
+        id: "gdv_bloat_gen",
+        condition: "Gastric Dilatation-Volvulus (GDV / Acute Bloat)",
+        category: "Genetic & Environmental",
+        severity: "Critical",
+        impactDescription: "Large and giant deep-chested thoracic cavities have high rates of gastric volvulus where the stomach rotates, blocking blood supply and rapidly causing life-threatening shock.",
+        environmentalTriggers: "Gulping large single meals rapidly, post-meal vigorous sprinting, elevated feeding bowls, and high anxiety.",
+        preventativeAction: "Prophylactic laparoscopic gastropexy, slow-feeder bowls, splitting food into multiple daily portions, and enforcing 1 hour of quiet rest post-meal.",
+        citation: "Purdue University School of Veterinary Medicine Bloat Study"
+      },
+      {
+        id: "hip_elbow_gen",
+        condition: "Hip & Elbow Dysplasia with Degenerative Joint Disease",
+        category: "Genetic & Environmental",
+        severity: "High",
+        impactDescription: "Excessive biomechanical stress across large skeletal joints causes articular cartilage wear, subluxation, osteophyte development, and chronic mobility pain.",
+        environmentalTriggers: "Adolescent overfeeding accelerating skeletal mass ahead of muscular tone, running on concrete, and slick floors.",
+        preventativeAction: "Feed calibrated large-breed puppy food with restricted calcium, maintain lean Body Condition Score (4-5), and provide traction rugs over smooth floors.",
+        citation: "Orthopedic Foundation for Animals (OFA) Registry"
+      },
+      {
+        id: "dcm_cardiac_gen",
+        condition: "Dilated Cardiomyopathy (DCM) & Myocardial Failure",
+        category: "Genetic & Environmental",
+        severity: "High",
+        impactDescription: "Progressive thinning and dilation of ventricular heart walls reduces contractile ejection fraction, predisposing to arrhythmias and congestive heart failure.",
+        environmentalTriggers: "Unbalanced boutique or grain-free diets with poor taurine bioavailability, thermal heat stress, and heavy physical exhaustion.",
+        preventativeAction: "Feed WSAVA-compliant complete formulas with verified bioavailability, schedule annual cardiac auscultation, and perform baseline ECGs in senior years.",
+        citation: "ACVIM Consensus Guidelines on Canine Dilated Cardiomyopathy"
+      },
+      {
+        id: "exertional_heat_gen",
+        condition: "Exertional Heat Exhaustion & Thermal Strain",
+        category: "Environmental",
+        severity: "Monitoring",
+        impactDescription: "Substantial muscle mass generates high internal metabolic heat during activity, which combined with thick coats can rapidly overwhelm canine panting mechanisms.",
+        environmentalTriggers: "Direct midday sun exposure, high humidity, running alongside bikes, and lack of shaded rest breaks.",
+        preventativeAction: "Schedule walks during early mornings or late evenings in summer, carry portable cool water, and regularly brush out dense undercoat.",
+        citation: "AAHA Canine Lifestyle & Environmental Thermal Protection Protocol"
+      }
+    ];
+  }
+
+  // Medium / Small / Toy default
+  return [
+    {
+      id: "patellar_joint_gen",
+      condition: "Medial Patellar Luxation & Joint Vulnerability",
+      category: "Genetic & Environmental",
+      severity: "High",
+      impactDescription: "Shallow trochlear groove alignment permits the patella to slip out of track, inducing cartilage abrasion, intermittent skipping lameness, and secondary cruciate strain.",
+      environmentalTriggers: "Jumping down from elevated furniture, slick tile/hardwood slipping, and carrying excess body weight.",
+      preventativeAction: "Use pet ramps for sofas and beds, lay non-slip runners on slick floors, and keep body condition score strictly lean.",
+      citation: "Orthopedic Foundation for Animals (OFA) Joint Database"
+    },
+    {
+      id: "mitral_valve_gen",
+      condition: "Myxomatous Mitral Valve Disease (MMVD)",
+      category: "Genetic",
+      severity: "High",
+      impactDescription: "Progressive fibroelastic degeneration of the mitral valve leaflets leads to systolic regurgitant blood flow, left atrial enlargement, and congestive heart failure.",
+      environmentalTriggers: "High dietary sodium, untreated severe dental tartar shedding bacteria into circulation, and sudden unconditioned physical overexertion.",
+      preventativeAction: "Regular cardiac auscultation at every wellness check; baseline echocardiography upon murmur detection; maintain excellent dental hygiene.",
+      citation: "ACVIM Consensus Statement on Chronic Valvular Heart Disease"
+    },
+    {
+      id: "atopic_skin_gen",
+      condition: "Environmental Atopic Dermatitis & Pododermatitis",
+      category: "Environmental",
+      severity: "Moderate",
+      impactDescription: "Hypersensitivity to ubiquitous airborne pollens, grass spores, and dust mites triggers intense pruritus, self-trauma, paw erythema, and secondary yeast infections.",
+      environmentalTriggers: "Seasonal grass bloom cycles, dry indoor winter heating, pesticide-treated lawns, and damp vegetation.",
+      preventativeAction: "Perform post-walk paw wipe routines with hypoallergenic wipes, administer marine omega-3 fatty acids, and use soothing veterinary shampoos.",
+      citation: "International Committee on Allergic Diseases of Animals (ICADA)"
+    },
+    {
+      id: "periodontal_gen",
+      condition: "Periodontal Disease & Subgingival Micro-Crowding",
+      category: "Genetic & Environmental",
+      severity: "Moderate",
+      impactDescription: "Close proximity of teeth in compact jaws promotes rapid calculus accumulation and subgingival bacterial biofilm, driving bone loss and systemic inflammation.",
+      environmentalTriggers: "Exclusive wet food feeding without mechanical dental abrasion and absence of home oral hygiene routines.",
+      preventativeAction: "Daily pet toothbrushing with enzymatic toothpaste, VOHC-certified dental chews, and annual professional ultrasonic dental cleanings.",
+      citation: "American Veterinary Dental College (AVDC) Guidelines"
+    }
+  ];
+}
+
+// API endpoint for Genetic & Environmental Risk Factors
+app.post("/api/gemini/risk-factors", async (req, res) => {
+  const { breedName, size, age } = req.body;
+  const cleanBreed = (breedName || "Canine").trim();
+  const cleanSize = (size || "medium").toLowerCase();
+  const cacheKey = `${cleanBreed.toLowerCase()}_${cleanSize}`;
+
+  const cached = riskFactorsCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < 4 * 60 * 60 * 1000) {
+    return res.json({ ...cached.data, cached: true });
+  }
+
+  const prompt = `You are a senior veterinary geneticist and canine epidemiologist.
+Analyze the canine breed '${cleanBreed}' (size category: ${cleanSize}, age: ${age || 3} years) to identify 3 to 5 breed-specific health liabilities (both genetic predispositions and environmental triggers/vulnerabilities).
+For each liability:
+1. id: lowercase alphanumeric identifier (e.g. 'gdv_bloat', 'hip_dysplasia', 'brachycephalic_airway').
+2. condition: Name of the condition/disease.
+3. category: Exactly one of: 'Genetic', 'Environmental', or 'Genetic & Environmental'.
+4. severity: Exactly one of: 'Critical', 'High', 'Moderate', or 'Monitoring'.
+5. impactDescription: 2 to 3 sentences explaining the anatomical/biological mechanism and clinical pathology.
+6. environmentalTriggers: Specific lifestyle, exercise, terrain, dietary, or climatic triggers that aggravate this condition.
+7. preventativeAction: Concrete evidence-based veterinary preventative actions owners and clinics can take.
+8. citation: Authoritative veterinary body or study (e.g. 'OFA Joint Registry', 'University of Georgia (UGA) Mortality Cohort', 'AAHA Canine Guidelines', 'RVC VetCompass™', 'ACVIM Consensus').
+
+Return JSON matching:
+{
+  "riskFactors": [
+    {
+      "id": "condition_id",
+      "condition": "Condition Name",
+      "category": "Genetic & Environmental",
+      "severity": "High",
+      "impactDescription": "...",
+      "environmentalTriggers": "...",
+      "preventativeAction": "...",
+      "citation": "..."
+    }
+  ]
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: ACTIVE_FLASH_MODEL || "gemini-3.8-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            riskFactors: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  id: { type: Type.STRING },
+                  condition: { type: Type.STRING },
+                  category: { type: Type.STRING },
+                  severity: { type: Type.STRING },
+                  impactDescription: { type: Type.STRING },
+                  environmentalTriggers: { type: Type.STRING },
+                  preventativeAction: { type: Type.STRING },
+                  citation: { type: Type.STRING }
+                },
+                required: ["id", "condition", "category", "severity", "impactDescription", "environmentalTriggers", "preventativeAction", "citation"]
+              }
+            }
+          },
+          required: ["riskFactors"]
+        }
+      }
+    });
+
+    const responseText = response.text || "{}";
+    let parsed: any;
+    try {
+      let cleanJson = responseText.trim();
+      if (cleanJson.startsWith("```")) {
+        const lines = cleanJson.split("\n");
+        if (lines[0].startsWith("```")) lines.shift();
+        if (lines[lines.length - 1].startsWith("```")) lines.pop();
+        cleanJson = lines.join("\n").trim();
+      }
+      parsed = JSON.parse(cleanJson);
+    } catch (parseErr) {
+      parsed = { riskFactors: [] };
+    }
+
+    if (parsed && Array.isArray(parsed.riskFactors) && parsed.riskFactors.length >= 3) {
+      const resultPayload = {
+        breedName: cleanBreed,
+        size: cleanSize,
+        riskFactors: parsed.riskFactors,
+        isFallback: false
+      };
+      riskFactorsCache.set(cacheKey, { data: resultPayload, timestamp: Date.now() });
+      return res.json(resultPayload);
+    }
+    throw new Error("Invalid or insufficient risk factors returned from AI model");
+  } catch (error: any) {
+    logServerEvent('WARN', "Notice in /api/gemini/risk-factors, activating curated veterinary fallback", {
+      error: error.message || error,
+      breed: cleanBreed
+    });
+
+    recordGeminiRateLimitDiagnostic(
+      "/api/gemini/risk-factors",
+      ACTIVE_FLASH_MODEL || "gemini-3.8-flash",
+      error,
+      "Static Genetic & Environmental Risk Protocol",
+      cleanBreed
+    );
+
+    const fallbackList = getCuratedRiskFactorsFallback(cleanBreed, cleanSize);
+    const fallbackPayload = {
+      breedName: cleanBreed,
+      size: cleanSize,
+      riskFactors: fallbackList,
+      isFallback: true
+    };
+
+    riskFactorsCache.set(cacheKey, { data: fallbackPayload, timestamp: Date.now() });
+    return res.json(fallbackPayload);
   }
 });
 

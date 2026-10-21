@@ -8,6 +8,8 @@ import { BREEDS } from '../breeds.ts';
 import { getBreedImagePath } from '../utils/breedImages.ts';
 import D3MilestoneChart from './D3MilestoneChart.tsx';
 import D3GrowthChart from './D3GrowthChart.tsx';
+import D3LongevityTrendChart from './D3LongevityTrendChart.tsx';
+import GeneticEnvironmentalRisks from './GeneticEnvironmentalRisks.tsx';
 import { Share2, RefreshCw } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import {
@@ -1646,6 +1648,16 @@ You are doing a truly wonderful job caring for ${companionName}. You can downloa
             </div>
           ))}
         </div>
+      </div>
+
+      {/* 6.5. Dynamic D3.js Longevity Trend Section (Spans 3 columns) */}
+      <div className="md:col-span-3 bg-white/60 dark:bg-[#282420]/75 backdrop-blur-xl border-[2.5px] border-[#1A1A1A] dark:border-[#F0ECE6] shadow-[4px_4px_0_#1A1A1A] dark:shadow-[4px_4px_0_#F0ECE6] rounded-xl p-6">
+        <D3LongevityTrendChart breed={breed} currentAge={age} petName={petName} />
+      </div>
+
+      {/* 6.8. Dynamic Genetic & Environmental Risk Factors Section (Spans 3 columns) */}
+      <div className="md:col-span-3">
+        <GeneticEnvironmentalRisks breed={breed} currentAge={age} petName={petName} />
       </div>
 
       {/* 7. Age-Calibrated Clinical Guidance & Breed Health Watch (Spans 2 columns) */}
